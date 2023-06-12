@@ -20,6 +20,7 @@ conda install -c conda-forge dill
 conda install -c anaconda seaborn
 
 conda install -c conda-forge geopandas
+conda install -c conda-forge optuna
 mamba install -c conda-forge wandb
 ```
 
