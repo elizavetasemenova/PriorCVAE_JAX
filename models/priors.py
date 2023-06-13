@@ -1,4 +1,5 @@
 # functions implementiong GP priors, which are generalisable for any number of dimensions
+import jax.numpy as jnp
 
 def dist_euclid(x, z):
     x = jnp.array(x) 
