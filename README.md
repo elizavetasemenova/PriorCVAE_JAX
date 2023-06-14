@@ -24,13 +24,3 @@ conda install -c conda-forge pytorch-lightning
 
 conda install -c conda-forge geopandas=0.12.2
 ```
-
-
-# PriorCVAE_JAX
-
-- [ ] set up writing tests
-- [ ] automate tests with workflow for CI/CD
-- [x] create environment
-- [ ] generate 1d GP data
-- [ ] run example MCMC
-- [ ] port CVAE code
