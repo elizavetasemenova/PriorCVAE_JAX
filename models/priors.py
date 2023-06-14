@@ -1,5 +1,10 @@
-# functions implementiong GP priors, which are generalisable for any number of dimensions
+# functions implementing GP priors, which are generalisable for any number of dimensions
+
 import jax.numpy as jnp
+
+import numpyro
+import numpyro.distributions as npdist 
+
 
 def dist_euclid(x, z):
     x = jnp.array(x) 
