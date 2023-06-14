@@ -20,6 +20,7 @@ conda install -c conda-forge dill
 conda install -c anaconda seaborn
 conda install -c conda-forge optuna
 conda install -c conda-forge wandb
+conda install -c conda-forge pytorch-lightning
 
 conda install -c conda-forge geopandas=0.12.2
 ```
