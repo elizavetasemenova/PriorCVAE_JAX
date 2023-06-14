@@ -1,6 +1,7 @@
 # functions implementing GP priors, which are generalisable for any number of dimensions
 
 import jax.numpy as jnp
+import numpyro
 
 import numpyro
 import numpyro.distributions as npdist 

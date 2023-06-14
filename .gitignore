@@ -2,3 +2,7 @@
 /models/__pycache__
 .ipynb_checkpoints
 1dGP_n80_continuous_e400_b1K_PriorCVAE.ipynb
+.ipynb_checkpoints
+.vscode
+__pycache__
+.pytest_cache
