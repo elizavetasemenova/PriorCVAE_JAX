@@ -27,7 +27,8 @@ conda install -c conda-forge geopandas=0.12.2
 
 # PriorCVAE_JAX
 
-- [ ] set up workflow for CI/CD
+- [ ] set up writing tests
+- [ ] automate tests with workflow for CI/CD
 - [x] create environment
 - [ ] generate 1d GP data
 - [ ] run example MCMC
