@@ -2,6 +2,7 @@
 
 import jax
 from jax import random
+import jax.numpy as jnp
 from flax import linen as nn
 
 class Encoder(nn.Module):
@@ -40,33 +41,19 @@ class VAE(nn.Module):
         self.decoder = Decoder(hidden_dim = self.hidden_dim, out_dim    = self.out_dim)
 
     @nn.compact
-    def __call__(self, x, z_rng):
+    def __call__(self, x):
 
+        def reparameterize(rng, mean, logvar):
+            std = jnp.exp(0.5 * logvar)
+            eps = random.normal(rng, logvar.shape)
+            return mean + eps * std
+
+        #rng_key = self.make_rng("train_latent_dist")
+        rng_key = jax.random.PRNGKey(0)        # TO DO : CHANGE TO RANDOM KEY - key = self.make_rng('stats')
         z_mu, z_sd = self.encoder(x)
-        z = reparameterize(z_rng, z_mu, z_sd)
-        x_hat = self.dencoder(z)
+        z = reparameterize(rng_key, z_mu, z_sd)
+        x_hat = self.decoder(z)
 
-        return x, x_hat, z_mean, z_logvar
-    
-
-@jax.vmap
-def kl_divergence(mean, logvar):
-  return -0.5 * jnp.sum(1 + logvar - jnp.square(mean) - jnp.exp(logvar))
-    
-
-
-
-
-
-
-    
-
-
-
-def reparameterize(rng, mean, logsd):
-    std = jnp.exp(0.5 * logvar)
-    eps = random.normal(rng, logvar.shape)
-    return mean + eps * std
-
+        return x, x_hat, z_mu, z_sd
 
 
