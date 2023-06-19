@@ -19,7 +19,7 @@ import torch
 import torch.utils.data as data
 
 # import priors 
-from models.priors import *
+from .priors import *
 
 def numpy_collate(batch):
     if isinstance(batch[0], np.ndarray):
