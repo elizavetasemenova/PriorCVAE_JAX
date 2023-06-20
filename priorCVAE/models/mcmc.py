@@ -1,4 +1,11 @@
 
+import time
+import numpy as np
+
+import numpyro
+import numpyro.distributions as npdist
+from numpyro.infer import init_to_median, MCMC, NUTS
+
 def numpyro_model(z_dim, conditional=False,  y=None, obs_idx=None, c=None,):
     
     if c is None and conditional==True:
