@@ -58,7 +58,7 @@ def create_data_loaders(*datasets : Sequence[data.Dataset],
                                  drop_last=is_train,
                                  collate_fn=numpy_collate,
                                  num_workers=num_workers,
-                                 persistent_workers=is_train,
+                                 persistent_workers=True,
                                  generator=torch.Generator().manual_seed(seed))
         loaders.append(loader)
     return loaders

@@ -6,3 +6,6 @@
 .vscode
 __pycache__
 .pytest_cache
+*.egg*
+.eggs
+*.egg-info
