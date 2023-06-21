@@ -46,9 +46,9 @@ class VAE(nn.Module):
     def __call__(self, y, c=None):
 
         def reparameterize(rng, mean, logvar):
-            std = jnp.exp(0.5 * logvar)
+            sd = jnp.exp(0.5 * logvar)
             eps = random.normal(rng, logvar.shape)
-            return mean + eps * std
+            return mean + eps * sd
 
         if self.conditional:
             y = jnp.concatenate([y, c], axis=-1)
