@@ -52,9 +52,6 @@ class VAE(nn.Module):
 
         if self.conditional:
             y = jnp.concatenate([y, c], axis=-1)
-
-        self.encoder = Encoder(hidden_dim = self.hidden_dim, latent_dim = self.latent_dim)
-        self.decoder = Decoder(hidden_dim = self.hidden_dim, out_dim    = self.out_dim)
         
         z_mu, z_sd = self.encoder(y)
         #rng_key = self.make_rng("train_latent_dist")
