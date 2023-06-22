@@ -1,4 +1,4 @@
-# PriorCVAE - JAX
+# PriorCVAE in JAX
 
 ## Environment
 Create the environment `flax612_env`: 
