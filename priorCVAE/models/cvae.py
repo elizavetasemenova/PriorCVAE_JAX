@@ -17,8 +17,8 @@ class Encoder(nn.Module):
         y = nn.Dense(self.hidden_dim, name="enc_hidden")(y)
         y = nn.leaky_relu(y)
         z_mu = nn.Dense(self.latent_dim, name="z_mu")(y)
-        z_sd = nn.Dense(self.latent_dim, name="z_sd")(y)
-        return z_mu, z_sd
+        z_logvar = nn.Dense(self.latent_dim, name="z_logvar")(y)
+        return z_mu, z_logvar
     
 
 class Decoder(nn.Module):
@@ -46,20 +46,17 @@ class VAE(nn.Module):
     def __call__(self, y, c=None):
 
         def reparameterize(rng, mean, logvar):
-            sd = jnp.exp(0.5 * logvar)
+            std = jnp.exp(0.5 * logvar)
             eps = random.normal(rng, logvar.shape)
-            return mean + eps * sd
-
-        if self.conditional:
-            y = jnp.concatenate([y, c], axis=-1)
+            return mean + eps * std
         
-        z_mu, z_sd = self.encoder(y)
+        z_mu, z_logvar = self.encoder(y)
         #rng_key = self.make_rng("train_latent_dist")
         rng_key = jax.random.PRNGKey(0)        # TO DO : CHANGE TO RANDOM KEY - key = self.make_rng('stats')
-        z = reparameterize(rng_key, z_mu, z_sd)
+        z = reparameterize(rng_key, z_mu, z_logvar)
         y_hat = self.decoder(z)
 
-        return y_hat, z_mu, z_sd
+        return y_hat, z_mu, z_logvar
     
     def generate(self, z):
         return self.decoder(z)
