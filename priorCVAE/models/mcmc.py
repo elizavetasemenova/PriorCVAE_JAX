@@ -1,19 +1,32 @@
 
 import time
+import os
 import numpy as np
+
+import jax.numpy as jnp
 
 import numpyro
 import numpyro.distributions as npdist
 from numpyro.infer import init_to_median, MCMC, NUTS
+from priorCVAE.models.cvae import Decoder
 
-def numpyro_model(z_dim, conditional=False,  y=None, obs_idx=None, c=None,):
+def numpyro_model(args, decoder_params, c=None,):
+    
+    z_dim       = args["latent_dim"]
+    hidden_dim  = args["hidden_dim"]
+    out_dim     = args["input_dim"]
+    conditional = args["conditional"]
+    y           = args["y_obs"]
+    obs_idx     = args["obs_idx"]
+    
+    decoder = Decoder(hidden_dim, out_dim)
     
     if c is None and conditional==True:
         c = numpyro.sample("c", npdist.Uniform(0.01,0.99))
 
     z = numpyro.sample("z", npdist.Normal(jnp.zeros(z_dim), jnp.ones(z_dim))) 
     
-    f = numpyro.deterministic("f", APPLY_DECODER(z))
+    f = numpyro.deterministic("f", decoder.apply({'params': decoder_params}, z))
     sigma = numpyro.sample("sigma", npdist.HalfNormal(0.1))
 
     if y is None: # durinig prediction
@@ -23,7 +36,7 @@ def numpyro_model(z_dim, conditional=False,  y=None, obs_idx=None, c=None,):
 
         
 
-def run_mcmc_vae(rng_key, numpyro_model, args, verbose=True, c=None, conditional=False):
+def run_mcmc_vae(rng_key, numpyro_model, args, decoder_params, verbose=True, c=None, conditional=False):
     start = time.time()
 
     init_strategy = init_to_median(num_samples=10)
@@ -37,7 +50,8 @@ def run_mcmc_vae(rng_key, numpyro_model, args, verbose=True, c=None, conditional
         progress_bar=False if "NUMPYRO_SPHINXBUILD" in os.environ else True,
     )
     start = time.time()
-    mcmc.run(rng_key, args["z_dim"], conditional, args["y_obs"], args["obs_idx"], c )
+    #mcmc.run(rng_key, args["z_dim"], conditional, args["y_obs"], args["obs_idx"], c )
+    mcmc.run(rng_key, args, decoder_params)
     t_elapsed = time.time() - start
     if verbose:
         mcmc.print_summary(exclude_deterministic=False)
