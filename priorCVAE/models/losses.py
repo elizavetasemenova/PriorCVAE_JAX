@@ -8,6 +8,6 @@ def kl_divergence(mean, logvar):
   return -0.5 * jnp.sum(1 + logvar - jnp.square(mean) - jnp.exp(logvar))
 
 @jax.jit
-def rcl(y, reconstructed_y):
+def rcl(y, reconstructed_y, vae_var=1):
     """ sum or mean? """
-    return jnp.sum(optax.l2_loss(reconstructed_y, y)) 
+    return jnp.sum(optax.l2_loss(reconstructed_y, y) / vae_var) 
