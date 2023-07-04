@@ -43,17 +43,18 @@ class VAE(nn.Module):
         self.decoder = Decoder(hidden_dim = self.hidden_dim, out_dim    = self.out_dim)
 
     @nn.compact
-    def __call__(self, y, c=None):
+    def __call__(self, y, z_rng, c=None):
 
-        def reparameterize(rng, mean, logvar):
+        def reparameterize(z_rng, mean, logvar):
             std = jnp.exp(0.5 * logvar)
-            eps = random.normal(rng, logvar.shape)
+            eps = random.normal(z_rng, logvar.shape)
             return mean + eps * std
         
         z_mu, z_logvar = self.encoder(y)
-        #rng_key = self.make_rng("train_latent_dist")
-        rng_key = jax.random.PRNGKey(0)        # TO DO : CHANGE TO RANDOM KEY - key = self.make_rng('stats')
-        z = reparameterize(rng_key, z_mu, z_logvar)
+
+        ## Uncomment for previous version
+        # z_rng = jax.random.PRNGKey(0)
+        z = reparameterize(z_rng, z_mu, z_logvar)
         y_hat = self.decoder(z)
 
         return y_hat, z_mu, z_logvar

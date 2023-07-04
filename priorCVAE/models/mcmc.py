@@ -10,7 +10,7 @@ import numpyro.distributions as npdist
 from numpyro.infer import init_to_median, MCMC, NUTS
 from priorCVAE.models.cvae import Decoder
 
-def numpyro_model(args, decoder_params, c=None,):
+def numpyro_model(args, decoder_params, c=None):
     
     z_dim       = args["latent_dim"]
     hidden_dim  = args["hidden_dim"]
