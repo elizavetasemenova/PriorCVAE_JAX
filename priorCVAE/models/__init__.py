@@ -1,4 +1,3 @@
-from .priors import *
-from .cvae import *
-from .losses import *
-from .data import *
+from .encoder import Encoder
+from .decoder import Decoder
+from .vae import VAE
