@@ -20,12 +20,11 @@ class VAE(nn.Module):
     decoder: Decoder
 
     @nn.compact
-    def __call__(self, y: jnp.ndarray, z_rng: random.KeyArray, c=None) -> (jnp.ndarray, jnp.ndarray, jnp.ndarray):
+    def __call__(self, y: jnp.ndarray, z_rng: random.KeyArray) -> (jnp.ndarray, jnp.ndarray, jnp.ndarray):
         """
 
         :parma y: a Jax ndarray of the shape, (N, D_{observed}).
         :param z_rng: a PRNG key used as the random key.
-        :param c: # FIXME: c is not used?
 
         Returns: a list of three values: output of the decoder, mean of the latent z, logvar of the latent z.
 
@@ -44,13 +43,3 @@ class VAE(nn.Module):
         y_hat = self.decoder(z)
 
         return y_hat, z_mu, z_logvar
-    
-    def generate(self, z: jnp.ndarray) -> jnp.ndarray:
-        """
-        Generate the output of the decoder by a forward pass.
-
-        :param z: input for the decoder of the shape,  (N, D_{latent}).
-
-        :returns: Output of the decoder model of the shape, (N, D_{observed}).
-        """
-        return self.decoder(z)

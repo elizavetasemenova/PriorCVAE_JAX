@@ -61,8 +61,9 @@ def euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
     """
     Calculate Euclidean distance between the two vectors, x and y.
 
-    # FIXME: What is the correct formula here?
-    d(x, y) = ...
+    d(x, y) = sqrt(x**2 + y**2.T - 2 * <x, transpose(y)>)
+
+    The implementation uses the braodcasting functionality of jax.numpy for mulit-dimensionality calculation.
 
     :param x: Jax ndarray of the shape, (N_1, D).
     :param y: Jax ndarray of the shape, (N_2, D).
@@ -74,14 +75,8 @@ def euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
         x = x.reshape(x.shape[0], 1)
     if len(y.shape) == 1:
         y = y.reshape(y.shape[0], 1)
-    n_x, m_x = x.shape
-    n_y, m_y = y.shape
-    assert m_x == m_y
 
-    # FIXME: Why is for loop required?
-    delta = jnp.zeros((n_x, n_y))
-    for d in jnp.arange(m_x):
-        x_d = x[:, d]
-        y_d = y[:, d]
-        delta += (x_d[:, jnp.newaxis] - y_d) ** 2
-    return jnp.sqrt(delta)
+    assert x.shape[-1] == y.shape[-1]
+
+    dist = jnp.sum(jnp.square(x), axis=-1)[..., None] + jnp.sum(jnp.square(y), axis=-1)[..., None].T - 2 * jnp.dot(x, y.T)
+    return jnp.sqrt(dist)

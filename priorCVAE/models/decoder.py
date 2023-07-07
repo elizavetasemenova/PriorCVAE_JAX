@@ -1,18 +1,25 @@
 """
 File contains the Decoder models.
 """
+from abc import ABC
+
 from flax import linen as nn
 import jax.numpy as jnp
 
 
-class Decoder(nn.Module):
+class Decoder(ABC, nn.Module):
+    """Parent class for decoder model."""
+    def __init__(self):
+        super().__init__()
+
+
+class MLPDecoder(Decoder):
     """
-    Decoder model with the structure:
+    MLP decoder model with the structure:
 
     z_tmp = Leaky_RELU(MLP(z))
     y = MLP(z_tmp)
 
-    # TODO: How to make architecture flexible?
     """
     hidden_dim: int
     out_dim: int

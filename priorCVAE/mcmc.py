@@ -15,24 +15,20 @@ from numpyro.infer import init_to_median, MCMC, NUTS
 from priorCVAE.models import Decoder
 
 
-def numpyro_model(args: Dict, decoder_params: Dict, c=None):
+def numpyro_model(args: Dict, decoder: Decoder, decoder_params: Dict):
     """
     Numpyro model used for running MCMC inference.
+
+    :param args: a dictionary with the arguments required for MCMC.
+    :param decoder: a decoder model.
+    :param decoder_params: a dictionary with decoder network parameters.
     """
 
     assert ["latent_dim", "hidden_dim", "input_dim", "conditional", "y_obs", "obs_idx"] in args.keys()
 
     z_dim = args["latent_dim"]
-    hidden_dim = args["hidden_dim"]
-    out_dim = args["input_dim"]
-    conditional = args["conditional"]
     y = args["y_obs"]
     obs_idx = args["obs_idx"]
-
-    decoder = Decoder(hidden_dim, out_dim)
-
-    if c is None and conditional is True:
-        c = numpyro.sample("c", npdist.Uniform(0.01, 0.99))
 
     z = numpyro.sample("z", npdist.Normal(jnp.zeros(z_dim), jnp.ones(z_dim)))
 
@@ -45,20 +41,17 @@ def numpyro_model(args: Dict, decoder_params: Dict, c=None):
         y = numpyro.sample("y", npdist.Normal(f[obs_idx], sigma), obs=y)
 
 
-def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decoder_params: Dict,
-                 verbose: bool = True, c=None, conditional=False) -> [MCMC, jnp.ndarray, float]:
+def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decoder: Decoder, decoder_params: Dict,
+                 verbose: bool = True) -> [MCMC, jnp.ndarray, float]:
     """
     Run MCMC inference using VAE decoder.
 
     :param rng_key: a PRNG key used as the random key.
     :param model: a numpyro model of the type numpypro primitives.
     :param args: a dictionary with the arguments required for MCMC.
+    :param decoder: a decoder model.
     :param decoder_params: a dictionary with decoder network parameters.
     :param verbose: if True, prints the MCMC summary.
-
-    # FIXME: c and conditional are not used.
-    :param c:
-    :param conditional:
 
     Returns:
         - MCMC object
@@ -77,8 +70,7 @@ def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decod
         progress_bar=False if "NUMPYRO_SPHINXBUILD" in os.environ else True,
     )
     start = time.time()
-    # mcmc.run(rng_key, args["z_dim"], conditional, args["y_obs"], args["obs_idx"], c )
-    mcmc.run(rng_key, args, decoder_params)
+    mcmc.run(rng_key, args, decoder, decoder_params)
     t_elapsed = time.time() - start
     if verbose:
         mcmc.print_summary(exclude_deterministic=False)
