@@ -8,3 +8,9 @@ conda create -n flax612_env python=3.10
 conda activate flax612_env
 pip install -r requirements.txt
 ```
+
+## To runs tests
+
+```shell
+pytest -v tests/
+```
