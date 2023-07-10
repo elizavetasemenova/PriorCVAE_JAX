@@ -15,7 +15,7 @@ def test_kl_divergence(dimension):
 
     kl_value = kl_divergence(m, log_S)
 
-    expected_kl_value = -0.5 * (1 + log_S - jnp.exp(log_S) - m**2)
+    expected_kl_value = -0.5 * (1 + log_S - jnp.exp(log_S) - jnp.square(m))
     expected_kl_value = jnp.sum(expected_kl_value)
 
     assert kl_value == expected_kl_value

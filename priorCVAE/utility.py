@@ -57,9 +57,9 @@ def create_data_loaders(*datasets: Sequence[data.Dataset], train: Union[bool, Se
     return loaders
 
 
-def euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
+def sq_euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
     """
-    Calculate Euclidean distance between the two vectors, x and y.
+    Calculate Squared Euclidean distance between the two vectors, x and y.
 
     d(x, y) = sqrt(x**2 + y**2.T - 2 * <x, transpose(y)>)
 
@@ -79,4 +79,4 @@ def euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
     assert x.shape[-1] == y.shape[-1]
 
     dist = jnp.sum(jnp.square(x), axis=-1)[..., None] + jnp.sum(jnp.square(y), axis=-1)[..., None].T - 2 * jnp.dot(x, y.T)
-    return jnp.sqrt(dist)
+    return dist

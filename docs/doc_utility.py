@@ -60,9 +60,8 @@ class GPDataset(data.Dataset):
         x = jnp.linspace(self.x_lim_low, self.x_lim_high, self.n_data)
         gp_predictive = Predictive(GP, num_samples=self.n_samples)
         kernel = SquaredExponential(lengthscale=self.ls)
-        all_draws = gp_predictive(rng_key, x=x, kernel=kernel, jitter=1e-6, sample_lengthscale=self.ls is None)
+        all_draws = gp_predictive(rng_key, x=x, kernel=kernel, jitter=1e-5, sample_lengthscale=self.ls is None)
 
-        # ToDo: check if this is even required.
         ls_draws = jnp.array(all_draws['ls'])
         gp_draws = jnp.array(all_draws['y'])
 

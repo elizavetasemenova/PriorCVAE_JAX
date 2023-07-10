@@ -4,7 +4,7 @@ File contains the code for Gaussian processes kernels.
 
 from abc import ABC, abstractmethod
 import jax.numpy as jnp
-from priorCVAE.utility import euclidean_dist
+from priorCVAE.utility import sq_euclidean_dist
 
 
 class Kernel(ABC):
@@ -38,10 +38,15 @@ class SquaredExponential(Kernel):
         :return: kernel matrix of the shape `(N1, N2)`.
 
         """
+        if len(x1.shape) == 1:
+            x1 = x1[..., None]
+        if len(x2.shape) == 1:
+            x2 = x2[..., None]
         assert x1.shape[-1] == x2.shape[-1]
-        dist = euclidean_dist(x1, x2)
-        dist_sq = jnp.power(dist / self.lengthscale, 2.0)
-        k = self.variance * jnp.exp(-0.5 * dist_sq)
+        x1 = x1 / self.lengthscale
+        x2 = x2 / self.lengthscale
+        dist = sq_euclidean_dist(x1, x2)
+        k = self.variance * jnp.exp(-0.5 * dist)
         assert k.shape == (x1.shape[0], x2.shape[0])
         return k
 
