@@ -26,9 +26,9 @@ def kl_divergence(mean: jnp.ndarray, logvar: jnp.ndarray) -> jnp.ndarray:
 
 
 @jax.jit
-def vae_reconstruction_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_var: float = 1.) -> jnp.ndarray:
+def scaled_sum_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_var: float = 1.) -> jnp.ndarray:
     """
-    VAE reconstruction loss, i.e.
+    Scaled sum squared loss, i.e.
 
     L(y, y') = 0.5 * sum(((y - y')^2) / vae_var)
 
@@ -40,3 +40,20 @@ def vae_reconstruction_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_va
     """
     assert y.shape == reconstructed_y.shape
     return 0.5 * jnp.sum((reconstructed_y - y)**2 / vae_var)
+
+
+@jax.jit
+def mean_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_var: float = 1.) -> jnp.ndarray:
+    """
+    Mean squared loss, MSE/var i.e.
+
+    L(y, y') = mean(((y - y')^2) / vae_var)
+
+    :param y: the ground-truth value of y with shape (N, D).
+    :param reconstructed_y: the reconstructed value of y with shape (N, D).
+    :param vae_var: a float value representing the varianc of the VAE.
+
+    :returns: the loss value
+    """
+    assert y.shape == reconstructed_y.shape
+    return jnp.mean((reconstructed_y - y)**2 / vae_var)

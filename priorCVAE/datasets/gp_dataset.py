@@ -1,5 +1,6 @@
 """
-File contains the utility function for docs and sample experiments.
+Gaussian process dataset.
+
 """
 
 import random as rnd
@@ -24,7 +25,7 @@ class GPDataset(data.Dataset):
     def __init__(self, n_data: int = 400, n_samples: int = 10000, x_lim_low: int = 0, x_lim_high: int = 1,
                  lengthscale: Union[float, None] = None):
         """
-
+        Initialize the Gaussian Process dataset class.
 
         :param n_data: number of data points in the interval.
         :param n_samples: number of samples.
@@ -54,7 +55,7 @@ class GPDataset(data.Dataset):
             - GP draws, f(x), with the shape (num_samples, x_limit).
             - lengthscale values.
         """
-        rng_key = rnd.randint(0, 912393890428)  # use seed?
+        rng_key = rnd.randint(0, 9999)
         rng_key, _ = random.split(random.PRNGKey(rng_key))
 
         x = jnp.linspace(self.x_lim_low, self.x_lim_high, self.n_data)

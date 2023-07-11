@@ -17,9 +17,9 @@ class MLPEncoder(Encoder):
     """
     MLP encoder model with the structure:
 
-    y_tmp = Leaky_RELU(MLP(y))
-    z_m = MLP(y_tmp)
-    z_logvar = MLP(y_tmp)
+    y_tmp = Leaky_RELU(Dense(y))
+    z_m = Dense(y_tmp)
+    z_logvar = Dense(y_tmp)
 
     """
     hidden_dim: int

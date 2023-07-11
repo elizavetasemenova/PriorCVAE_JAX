@@ -17,8 +17,8 @@ class MLPDecoder(Decoder):
     """
     MLP decoder model with the structure:
 
-    z_tmp = Leaky_RELU(MLP(z))
-    y = MLP(z_tmp)
+    z_tmp = Leaky_RELU(Dense(z))
+    y = Dense(z_tmp)
 
     """
     hidden_dim: int
