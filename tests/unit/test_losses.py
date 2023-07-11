@@ -4,7 +4,7 @@ Test the loss functions.
 import jax
 import jax.numpy as jnp
 
-from priorCVAE.losses import kl_divergence, vae_mse_reconstruction_loss
+from priorCVAE.losses import kl_divergence, vae_reconstruction_loss
 
 
 def test_kl_divergence(dimension):
@@ -21,15 +21,15 @@ def test_kl_divergence(dimension):
     assert kl_value == expected_kl_value
 
 
-def test_vae_mse_reconstruction_loss(num_data, dimension):
-    """Test VAE MSE reconstruction loss."""
+def test_vae_reconstruction_loss(num_data, dimension):
+    """Test VAE reconstruction loss."""
     key = jax.random.PRNGKey(123)
     y = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.1, maxval=4.)
     key, _ = jax.random.split(key)
     y_reconstruction = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.1, maxval=4.)
     vae_variance = jax.random.normal(key=key).item()
 
-    var_reconstruction_loss_val = vae_mse_reconstruction_loss(y, y_reconstruction, vae_variance)
+    var_reconstruction_loss_val = vae_reconstruction_loss(y, y_reconstruction, vae_variance)
 
     expected_val = jnp.sum(0.5 * (y - y_reconstruction)**2/vae_variance)
 

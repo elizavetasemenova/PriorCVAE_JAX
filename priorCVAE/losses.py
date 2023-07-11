@@ -4,7 +4,6 @@ File contains various loss functions.
 
 import jax
 import jax.numpy as jnp
-import optax
 
 
 @jax.jit
@@ -27,14 +26,11 @@ def kl_divergence(mean: jnp.ndarray, logvar: jnp.ndarray) -> jnp.ndarray:
 
 
 @jax.jit
-def vae_mse_reconstruction_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_var: float = 1.) -> jnp.ndarray:
+def vae_reconstruction_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_var: float = 1.) -> jnp.ndarray:
     """
-    # FIXME: This is actually not MSE as we take sum not mean.
-    VAE MSE reconstruction loss, MSE / vae_var, i.e.
+    VAE reconstruction loss, i.e.
 
     L(y, y') = 0.5 * sum(((y - y')^2) / vae_var)
-
-    Detailed derivation can be found here: https://learnopencv.com/variational-autoencoder-in-tensorflow/
 
     :param y: the ground-truth value of y with shape (N, D).
     :param reconstructed_y: the reconstructed value of y with shape (N, D).

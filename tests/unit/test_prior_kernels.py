@@ -33,7 +33,7 @@ def true_squared_exponential_value(x1, x2, lengthscale, variance):
 
 def test_squared_exponential_kernel(lengthscale, variance, dimension, num_data):
     """
-    Test the shape of squared exponential kernel.
+    Test the shape and value of squared exponential kernel.
     """
     kernel = SquaredExponential(lengthscale=lengthscale, variance=variance)
     key = jax.random.PRNGKey(123)
@@ -45,4 +45,4 @@ def test_squared_exponential_kernel(lengthscale, variance, dimension, num_data):
     expected_val = true_squared_exponential_value(x1, x2, lengthscale, variance)
 
     assert kernel_val.shape == expected_val.shape  # Shape
-    np.testing.assert_array_almost_equal(kernel_val, expected_val, decimal=5)  # Value
+    np.testing.assert_array_almost_equal(kernel_val, expected_val, decimal=6)  # Value

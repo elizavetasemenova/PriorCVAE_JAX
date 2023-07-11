@@ -23,4 +23,4 @@ def test_sq_euclidean_distance(num_data, dimension):
     sq_eucliden_dist_val = sq_euclidean_dist(x1, x2)
     expected_val = true_sq_euclidean_distance(x1, x2)
 
-    np.testing.assert_array_almost_equal(sq_eucliden_dist_val, expected_val, decimal=5)
+    np.testing.assert_array_almost_equal(sq_eucliden_dist_val, expected_val, decimal=6)
