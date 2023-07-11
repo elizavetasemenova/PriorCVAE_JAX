@@ -1,5 +1,8 @@
 import pytest
 
+from jax.config import config
+config.update("jax_enable_x64", True)
+
 
 @pytest.fixture(name="dimension", params=[1, 3])
 def _dimension_fixture(request):

@@ -31,6 +31,6 @@ def test_vae_mse_reconstruction_loss(num_data, dimension):
 
     var_reconstruction_loss_val = vae_mse_reconstruction_loss(y, y_reconstruction, vae_variance)
 
-    expected_val = jnp.mean((y - y_reconstruction)**2/vae_variance)
+    expected_val = jnp.sum(0.5 * (y - y_reconstruction)**2/vae_variance)
 
     assert var_reconstruction_loss_val == expected_val

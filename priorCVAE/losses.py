@@ -29,9 +29,10 @@ def kl_divergence(mean: jnp.ndarray, logvar: jnp.ndarray) -> jnp.ndarray:
 @jax.jit
 def vae_mse_reconstruction_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_var: float = 1.) -> jnp.ndarray:
     """
+    # FIXME: This is actually not MSE as we take sum not mean.
     VAE MSE reconstruction loss, MSE / vae_var, i.e.
 
-    L(y, y') = mean(((y - y')^2) / vae_var)
+    L(y, y') = 0.5 * sum(((y - y')^2) / vae_var)
 
     Detailed derivation can be found here: https://learnopencv.com/variational-autoencoder-in-tensorflow/
 
@@ -42,4 +43,4 @@ def vae_mse_reconstruction_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, va
     :returns: the loss value
     """
     assert y.shape == reconstructed_y.shape
-    return jnp.mean((reconstructed_y - y)**2 / vae_var)
+    return 0.5 * jnp.sum((reconstructed_y - y)**2 / vae_var)

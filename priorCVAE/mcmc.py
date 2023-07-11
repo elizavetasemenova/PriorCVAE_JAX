@@ -15,16 +15,16 @@ from numpyro.infer import init_to_median, MCMC, NUTS
 from priorCVAE.models import Decoder
 
 
-def numpyro_model(args: Dict, decoder: Decoder, decoder_params: Dict):
+def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict):
     """
-    Numpyro model used for running MCMC inference.
+    VAE numpyro model used for running MCMC inference.
 
     :param args: a dictionary with the arguments required for MCMC.
     :param decoder: a decoder model.
     :param decoder_params: a dictionary with decoder network parameters.
     """
 
-    assert ["latent_dim", "hidden_dim", "input_dim", "conditional", "y_obs", "obs_idx"] in args.keys()
+    # assert ["latent_dim", "hidden_dim", "input_dim", "conditional", "y_obs", "obs_idx"] in args.keys()
 
     z_dim = args["latent_dim"]
     y = args["y_obs"]
