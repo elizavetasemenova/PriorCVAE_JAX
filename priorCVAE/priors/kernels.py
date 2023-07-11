@@ -19,6 +19,23 @@ class Kernel(ABC):
     def __call__(self, x1, x2):
         pass
 
+    def _handle_input_shape(self, x: jnp.ndarray) -> jnp.ndarray:
+        """
+        The function checks if the input is in the shape (N, D). If (N, ) then a dimension is added in the end.
+        Otherwise, Exception is raised.
+        """
+        if len(x.shape) == 1:
+            x = x[..., None]
+        if len(x.shape) > 2:
+            raise Exception("Kernel only supports calculations with the input of shape (N, D).")
+        return x
+
+    def _scale_by_lengthscale(self, x: jnp.ndarray) -> jnp.ndarray:
+        """
+        Scale the input tensor by 1/lengthscale.
+        """
+        return x / self.lengthscale
+
 
 class SquaredExponential(Kernel):
     """
@@ -38,13 +55,11 @@ class SquaredExponential(Kernel):
         :return: kernel matrix of the shape `(N1, N2)`.
 
         """
-        if len(x1.shape) == 1:
-            x1 = x1[..., None]
-        if len(x2.shape) == 1:
-            x2 = x2[..., None]
+        x1 = self._handle_input_shape(x1)
+        x2 = self._handle_input_shape(x2)
         assert x1.shape[-1] == x2.shape[-1]
-        x1 = x1 / self.lengthscale
-        x2 = x2 / self.lengthscale
+        x1 = self._scale_by_lengthscale(x1)
+        x2 = self._scale_by_lengthscale(x2)
         dist = sq_euclidean_dist(x1, x2)
         k = self.variance * jnp.exp(-0.5 * dist)
         assert k.shape == (x1.shape[0], x2.shape[0])
@@ -53,7 +68,10 @@ class SquaredExponential(Kernel):
 
 class Matern32(Kernel):
     """
-    Matern-3/2 Kernel
+    Matern 3/2 Kernel.
+
+    K(x1, x2) = variance * (1 + √3 * ||x1 - x2|| / l**2) exp{-√3 * ||x1 - x2|| / l**2}
+
     """
 
     def __init__(self, lengthscale: float = 1.0, variance: float = 1.0):
@@ -69,12 +87,23 @@ class Matern32(Kernel):
         :return: kernel matrix of the shape `(N1, N2)`.
 
         """
-        raise NotImplementedError
+        x1 = self._handle_input_shape(x1)
+        x2 = self._handle_input_shape(x2)
+        assert x1.shape[-1] == x2.shape[-1]
+        x1 = self._scale_by_lengthscale(x1)
+        x2 = self._scale_by_lengthscale(x2)
+        dist = jnp.sqrt(sq_euclidean_dist(x1, x2))
+        sqrt3 = jnp.sqrt(3.0)
+        k = self.variance * (1.0 + sqrt3 * dist) * jnp.exp(-sqrt3 * dist)
+        assert k.shape == (x1.shape[0], x2.shape[0])
+        return k
 
 
 class Matern52(Kernel):
     """
-    Matern-5/2 Kernel
+    Matern 5/2 Kernel.
+
+    k(x1, x2) = σ² (1 + √5 * (||x1 - x2||) + 5/3 * ||x1 - x2||^2) exp{-√5 * ||x1 - x2||}
     """
 
     def __init__(self, lengthscale: float = 1.0, variance: float = 1.0):
@@ -90,4 +119,13 @@ class Matern52(Kernel):
         :return: kernel matrix of the shape `(N1, N2)`.
 
         """
-        raise NotImplementedError
+        x1 = self._handle_input_shape(x1)
+        x2 = self._handle_input_shape(x2)
+        assert x1.shape[-1] == x2.shape[-1]
+        x1 = self._scale_by_lengthscale(x1)
+        x2 = self._scale_by_lengthscale(x2)
+        dist = jnp.sqrt(sq_euclidean_dist(x1, x2))
+        sqrt5 = jnp.sqrt(5.0)
+        k = self.variance * (1.0 + sqrt5 * dist + 5.0 / 3.0 * jnp.square(dist)) * jnp.exp(-sqrt5 * dist)
+        assert k.shape == (x1.shape[0], x2.shape[0])
+        return k
