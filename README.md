@@ -28,3 +28,10 @@ Then, run the following command:
 ```shell
 pytest -v tests/
 ```
+
+### Projects using PriorVAE or PriorCVAE
+
+
+| Project | Description | Publication | Uses current library |
+| --- | --- | --- | --- |
+| [aggVAE](https://github.com/MLGlobalHealth/aggVAE) | "Deep learning and MCMC with aggVAE for shifting administrative boundaries: mapping malaria prevalence in Kenya", Elizaveta Semenova, Swapnil Mishra, Samir Bhatt, Seth Flaxman, Juliette Unwin | no
