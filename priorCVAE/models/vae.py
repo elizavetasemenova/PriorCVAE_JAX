@@ -14,17 +14,19 @@ from priorCVAE.models.decoder import Decoder
 
 class VAE(nn.Module):
     """
-    Variational autoencoder class binding the encoder and decoder model together.
+    Variational autoencoder (VAE) class binding the encoder and decoder model together.
     """
     encoder: Encoder
     decoder: Decoder
 
     @nn.compact
-    def __call__(self, y: jnp.ndarray, z_rng: random.KeyArray) -> (jnp.ndarray, jnp.ndarray, jnp.ndarray):
+    def __call__(self, y: jnp.ndarray, z_rng: random.KeyArray, c: jnp.ndarray = None) -> (jnp.ndarray, jnp.ndarray,
+                                                                                          jnp.ndarray):
         """
 
         :parma y: a Jax ndarray of the shape, (N, D_{observed}).
         :param z_rng: a PRNG key used as the random key.
+        :param c: a Jax ndarray used for cVAE of the shape, (N, C).
 
         Returns: a list of three values: output of the decoder, mean of the latent z, logvar of the latent z.
 
@@ -34,12 +36,16 @@ class VAE(nn.Module):
             std = jnp.exp(0.5 * logvar)
             eps = random.normal(z_rng, logvar.shape)
             return mean + eps * std
-        
-        z_mu, z_logvar = self.encoder(y)
 
-        # Uncomment for previous version
-        # z_rng = jax.random.PRNGKey(0)
+        if c is not None:
+            y = jnp.concatenate([y, c], axis=1)
+
+        z_mu, z_logvar = self.encoder(y)
         z = reparameterize(z_rng, z_mu, z_logvar)
+
+        if c is not None:
+            z = jnp.concatenate([z, c], axis=1)
+
         y_hat = self.decoder(z)
 
         return y_hat, z_mu, z_logvar

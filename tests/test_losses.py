@@ -43,9 +43,8 @@ def test_mean_squared_loss(num_data, dimension):
     y = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.1, maxval=4.)
     key, _ = jax.random.split(key)
     y_reconstruction = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.1, maxval=4.)
-    vae_variance = jax.random.normal(key=key).item()
 
-    vae_loss_val = mean_squared_loss(y, y_reconstruction, vae_variance)
-    expected_val = jnp.mean((y_reconstruction - y)**2/vae_variance)
+    vae_loss_val = mean_squared_loss(y, y_reconstruction)
+    expected_val = jnp.mean((y_reconstruction - y)**2)
 
     np.testing.assert_array_almost_equal(vae_loss_val, expected_val, decimal=6)
