@@ -1,62 +1,68 @@
 import numpy as np
-from ..models.priors import exp_sq_kernel
 import scipy.stats as stats
+import jax.numpy as jnp
 from collections import defaultdict
 
+from ..priors import SquaredExponential
 
-def mean_bootstrap_confidence_intervals(realizations):
+
+def mean_bootstrap_interval(
+    samples: jnp.ndarray, confidence_level: float=0.95, axis=0
+):
     """
-    Checks whether zero lies between the 5th- and 95th-percentile of the distributions of means of sample realizations.
+    Compute the confidence interval for the mean of the data using bootstrap resampling.
 
-    Args:
-        realizations: Array of shape (num_realizations, grid_size)
+    :param samples: Input array of samples.
+    :param confidence_level: Confidence level for the interval. Defaults to 0.9.
+    :param axis: Axis along which to compute mean. Defaults to 0.
+
     Returns:
-        zero_in_interval: True if lies between 5th and 95th percentile of the means. False otherwise.
-
+        tuple: Lower and upper confidence interval bounds for the mean of the data.
     """
-    np_rng = np.random.default_rng()
-    sample = realizations
-    sample = (sample,)
-    res = stats.bootstrap(sample, np.mean, axis=0, vectorized=True, confidence_level=0.9, method='percentile', n_resamples=1000, random_state=np_rng)
+    sample = (samples,)
+    res = stats.bootstrap(
+        sample,
+        np.mean,
+        axis=axis,
+        vectorized=True,
+        confidence_level=confidence_level,
+        method="percentile",
+        n_resamples=1000,
+    )
     ci_lower, ci_upper = res.confidence_interval
-    zero_in_interval = (ci_lower <= 0) & (0 <= ci_upper)
-    num_valid = np.where(zero_in_interval)[0].shape[0]
-    return zero_in_interval, num_valid
+
+    return ci_lower, ci_upper
 
 
-def evaluate_covariance(realizations, lengthscale, grid, kernel_variance=1.0):
+def frobenius_norm_of_kernel_diff(samples: jnp.ndarray, kernel: jnp.ndarray):
     """
-    Checks whether the covariance matrix of the realizations is close to the kernel matrix.
+    Computes the frobenius norm of the difference of a covariance matrix and kernel.
 
     Args:
-        realizations: Array of shape (num_realizations, grid_size)
-        lengthscale: Lengthscale of the kernel.
-        grid: Grid on which the realizations are defined.
-        kernel_variance: Variance of the kernel.
+        samples: array of shape (N, D)
+        kernel: array of shape (D, D)
     Returns:
         norm: Norm of the difference between the kernel matrix and the covariance matrix.
     """
 
-    covariance = compute_empirical_covariance(realizations)
+    covariance = compute_empirical_covariance(samples)
 
-    K = exp_sq_kernel(grid, grid, kernel_variance, lengthscale)
-
-    diff = K - covariance
+    diff = kernel - covariance
     norm = np.linalg.norm(diff)
 
     return norm
 
 
-def compute_empirical_covariance(realizations):
+def compute_empirical_covariance(samples: jnp.ndarray):
     """
-    Computes the empirical covariance matrix from the realizations.
+    Computes the empirical covariance matrix from samples.
 
     Args:
-        realizations: Array of shape (num_realizations, grid_size)
+        :param samples: Array of shape (num_samples, grid_size)
     Returns:
-        covariance: Empirical covariance matrix of the realizations.
+        :param covariance: Empirical covariance matrix of the samples.
     """
 
-    covariance = np.cov(np.transpose(realizations))
+    covariance = np.cov(np.transpose(samples))
 
     return covariance
