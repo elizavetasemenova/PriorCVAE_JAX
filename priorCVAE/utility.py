@@ -3,6 +3,7 @@ File contains utility functions used throughout the package
 """
 
 from typing import Sequence, Union, List
+import random
 
 import jax.numpy as jnp
 import numpy as np
@@ -26,7 +27,7 @@ def numpy_collate(batch):
 
 
 def create_data_loaders(*datasets: Sequence[data.Dataset], train: Union[bool, Sequence[bool]] = True,
-                        batch_size: int = 128, num_workers: int = 4, seed: int = 42) -> List[data.DataLoader]:
+                        batch_size: int = 128, num_workers: int = 4, seed: int = None) -> List[data.DataLoader]:
     """
     Creates data loaders used in JAX for a set of datasets.
     
@@ -40,6 +41,9 @@ def create_data_loaders(*datasets: Sequence[data.Dataset], train: Union[bool, Se
     Details: https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/guide4/Research_Projects_with_JAX.html
 
     """
+
+    if seed is None:
+        seed = random.randint(0, 9999)
 
     loaders = []
     if not isinstance(train, (list, tuple)):

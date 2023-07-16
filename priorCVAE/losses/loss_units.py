@@ -1,7 +1,6 @@
 """
 File contains various loss functions.
 """
-
 import jax
 import jax.numpy as jnp
 
