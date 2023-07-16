@@ -1,9 +1,6 @@
 import numpy as np
 import scipy.stats as stats
 import jax.numpy as jnp
-from collections import defaultdict
-
-from ..priors import SquaredExponential
 
 
 def mean_bootstrap_interval(
