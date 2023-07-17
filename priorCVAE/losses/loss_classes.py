@@ -4,7 +4,6 @@ File containing various loss classes that can be directed passed to the trainer 
 
 from functools import partial
 from abc import ABC, abstractmethod
-from typing import List
 
 import jax
 import jax.numpy as jnp
@@ -24,7 +23,7 @@ class Loss(ABC):
         self.conditional = conditional
 
     @abstractmethod
-    def __call__(self, state_params: FrozenDict, state: TrainState, batch: List[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+    def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
                  z_rng: KeyArray):
         pass
 
@@ -38,7 +37,7 @@ class SquaredSumAndKL(Loss):
         super().__init__(conditional)
 
     @partial(jax.jit, static_argnames=['self'])
-    def __call__(self, state_params: FrozenDict, state: TrainState, batch: List[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+    def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
                  z_rng: KeyArray) -> jnp.ndarray:
         """
         Calculates the loss value.

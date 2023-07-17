@@ -48,7 +48,7 @@ class VAETrainer:
         self.state = train_state.TrainState.create(apply_fn=self.model.apply, params=params, tx=self.optimizer)
 
     @partial(jax.jit, static_argnames=['self'])
-    def train_step(self, state: train_state.TrainState, batch: List[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+    def train_step(self, state: train_state.TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
                    z_rng: KeyArray) -> [train_state.TrainState, jnp.ndarray]:
         """
         A single train step. The function calculates the value and gradient using the current batch and updates the model.
@@ -63,7 +63,7 @@ class VAETrainer:
         return state.apply_gradients(grads=grads), val
 
     @partial(jax.jit, static_argnames=['self'])
-    def eval_step(self, state: train_state.TrainState, batch: List[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+    def eval_step(self, state: train_state.TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
                   z_rng: KeyArray) -> jnp.ndarray:
         """
         Evaluates the model on the batch.
@@ -76,7 +76,7 @@ class VAETrainer:
         """
         return self.loss_fn(state.params, state, batch, z_rng)
 
-    def train(self, data_generator, test_set: List[jnp.ndarray, jnp.ndarray, jnp.ndarray], num_iterations: int = 10,
+    def train(self, data_generator, test_set: [jnp.ndarray, jnp.ndarray, jnp.ndarray], num_iterations: int = 10,
               batch_size: int = 100, debug: bool = True) -> [List, List, float]:
         """
         Train the model.
