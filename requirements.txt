@@ -6,3 +6,4 @@ optax==0.1.5
 torch==2.0.1
 jupyter==1.0.0
 matplotlib==3.7.1
+orbax-checkpoint==0.2.7

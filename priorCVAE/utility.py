@@ -8,6 +8,7 @@ import random
 import orbax
 from flax.training import orbax_utils
 import jax.numpy as jnp
+from flax.core import FrozenDict
 import numpy as np
 import torch
 import torch.utils.data as data
@@ -89,7 +90,7 @@ def sq_euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
     return dist
 
 
-def save_model_params(ckpt_dir: str, params):
+def save_model_params(ckpt_dir: str, params: FrozenDict):
     """Save the model parameters in the specified directory."""
     ckpt = {'params': params}
     orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
@@ -97,8 +98,8 @@ def save_model_params(ckpt_dir: str, params):
     orbax_checkpointer.save(ckpt_dir, ckpt, save_args=save_args)
 
 
-def load_model_params(ckpt_dir: str):
+def load_model_params(ckpt_dir: str) -> FrozenDict:
     """Load the model parameters"""
     orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
-    restored_state = orbax_checkpointer.restore(ckpt_dir)['params']
-    return restored_state
+    restored_params = orbax_checkpointer.restore(ckpt_dir)['params']
+    return restored_params
