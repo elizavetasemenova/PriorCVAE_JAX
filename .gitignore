@@ -10,3 +10,5 @@ __pycache__
 .eggs
 *.egg-info
 .idea
+build/
+output/
