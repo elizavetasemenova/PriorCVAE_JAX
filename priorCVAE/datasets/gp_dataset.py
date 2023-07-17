@@ -10,7 +10,7 @@ from jax import random
 from numpyro.infer import Predictive
 import torch.utils.data as data
 
-from priorCVAE.priors import SquaredExponential, GP, Kernel
+from priorCVAE.priors import GP, Kernel
 
 
 class GPDataset(data.Dataset):

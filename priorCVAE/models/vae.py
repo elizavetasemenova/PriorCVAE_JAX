@@ -38,13 +38,13 @@ class VAE(nn.Module):
             return mean + eps * std
 
         if c is not None:
-            y = jnp.concatenate([y, c], axis=1)
+            y = jnp.concatenate([y, c], axis=-1)
 
         z_mu, z_logvar = self.encoder(y)
         z = reparameterize(z_rng, z_mu, z_logvar)
 
         if c is not None:
-            z = jnp.concatenate([z, c], axis=1)
+            z = jnp.concatenate([z, c], axis=-1)
 
         y_hat = self.decoder(z)
 
