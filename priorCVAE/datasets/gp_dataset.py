@@ -8,12 +8,11 @@ import random as rnd
 import jax.numpy as jnp
 from jax import random
 from numpyro.infer import Predictive
-import torch.utils.data as data
 
 from priorCVAE.priors import GP, Kernel
 
 
-class GPDataset(data.Dataset):
+class GPDataset:
     """
     Generate GP draws over the regular grid in the interval (x_lim_low, x_lim_high) with n_dataPoints points.
 

@@ -1,18 +1,31 @@
+"""
+File containing various loss classes that can be directed passed to the trainer object.
+"""
+
 from functools import partial
 from abc import ABC, abstractmethod
+from typing import List
 
 import jax
 import jax.numpy as jnp
+from jax.random import KeyArray
+from flax.training.train_state import TrainState
+from flax.core import FrozenDict
 
 from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss
 
 
 class Loss(ABC):
+    """
+    Parent class for all the loss classes. This is to enforce the structure of the __call__ function which is
+    used by the trainer object.
+    """
     def __init__(self, conditional: bool = False):
         self.conditional = conditional
 
     @abstractmethod
-    def __call__(self, state_params, state, batch: jnp.ndarray, z_rng):
+    def __call__(self, state_params: FrozenDict, state: TrainState, batch: List[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+                 z_rng: KeyArray):
         pass
 
 
@@ -25,7 +38,16 @@ class SquaredSumAndKL(Loss):
         super().__init__(conditional)
 
     @partial(jax.jit, static_argnames=['self'])
-    def __call__(self, state_params, state, batch: jnp.ndarray, z_rng):
+    def __call__(self, state_params: FrozenDict, state: TrainState, batch: List[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+                 z_rng: KeyArray) -> jnp.ndarray:
+        """
+        Calculates the loss value.
+
+        :param state_params: Current state parameters of the model.
+        :param state: Current state of the model.
+        :param batch: Current batch of the data. It is list of [x, y, c] values.
+        :param z_rng: a PRNG key used as the random key.
+        """
         _, y, ls = batch
         c = ls if self.conditional else None
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
