@@ -84,3 +84,23 @@ def sq_euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
 
     dist = jnp.sum(jnp.square(x), axis=-1)[..., None] + jnp.sum(jnp.square(y), axis=-1)[..., None].T - 2 * jnp.dot(x, y.T)
     return dist
+
+def dist_euclid(x, z):
+    """
+    Dimension-agnostic version of the distance function
+    """
+    x = jnp.array(x)
+    z = jnp.array(z)
+    if len(x.shape)==1:
+        x = x.reshape(x.shape[0], 1)
+    if len(z.shape)==1:
+        z = x.reshape(x.shape[0], 1)
+    n_x, m = x.shape
+    n_z, m_z = z.shape
+    assert m == m_z
+    delta = jnp.zeros((n_x,n_z))
+    for d in jnp.arange(m):
+        x_d = x[:,d]
+        z_d = z[:,d]
+        delta += (x_d[:,jnp.newaxis] - z_d)**2
+    return jnp.sqrt(delta)
