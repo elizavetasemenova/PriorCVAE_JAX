@@ -7,3 +7,4 @@ defaults:
   - wandb: defaults
   - optimizer: defaults
   - dataset: defaults
+  - test_runner: defaults
