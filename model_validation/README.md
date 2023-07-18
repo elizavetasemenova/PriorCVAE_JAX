@@ -1,6 +1,6 @@
 # Model Validation
 
-This directory contains tests for validating the performance of our models. MLflow is used to track the performance of models and the results of experiments.
+This directory contains tests for validating the performance of our models. Weights & Biases is used to track the performance of models and the results of experiments.
 
 ## Getting Started
 

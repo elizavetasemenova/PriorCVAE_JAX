@@ -1,0 +1,8 @@
+name: SquaredExponentialKernel
+lengthscale: 0.2
+variance: 1.0
+
+instance:
+  _target_: priorCVAE.priors.SquaredExponential
+  lengthscale: ${kernel.lengthscale}
+  variance: ${kernel.variance}

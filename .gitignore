@@ -12,4 +12,5 @@ __pycache__
 .idea
 build/
 output/
-wandb/
+/wandb/
+/outputs/

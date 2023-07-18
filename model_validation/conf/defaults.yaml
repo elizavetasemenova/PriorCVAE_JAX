@@ -1,0 +1,9 @@
+defaults:
+  - model: PriorVAE
+  - kernel: SquaredExponential
+  - grid: defaults
+  - train: defaults
+  - test: defaults
+  - wandb: defaults
+  - optimizer: defaults
+  - dataset: defaults
