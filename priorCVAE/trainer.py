@@ -34,14 +34,16 @@ class VAETrainer:
         self.state = None
         self.loss_fn = loss
 
-    def init_params(self, y: jnp.ndarray, c: jnp.ndarray = None):
+    def init_params(self, y: jnp.ndarray, c: jnp.ndarray = None, key: KeyArray = None):
         """
         Initialize the parameters of the model.
 
         :param y: sample input of the model.
         :param c: conditional variable, while using vanilla VAE model this should be None.
+        :param key: Jax PRNGKey to ensure reproducibility. If none, it is set randomly.
         """
-        key = jax.random.PRNGKey(random.randint(0, 9999))
+        if key is None:
+            key = jax.random.PRNGKey(random.randint(0, 9999))
         key, rng = jax.random.split(key, 2)
 
         params = self.model.init(rng, y, key, c)['params']
@@ -77,7 +79,7 @@ class VAETrainer:
         return self.loss_fn(state.params, state, batch, z_rng)
 
     def train(self, data_generator, test_set: [jnp.ndarray, jnp.ndarray, jnp.ndarray], num_iterations: int = 10,
-              batch_size: int = 100, debug: bool = True) -> [List, List, float]:
+              batch_size: int = 100, debug: bool = True, key: KeyArray = None) -> [List, List, float]:
         """
         Train the model.
 
@@ -86,6 +88,7 @@ class VAETrainer:
         :param num_iterations: Number of training iterations to be performed.
         :param batch_size: Batch-size of the data at each iteration.
         :param debug: A boolean variable to indicate whether to print debug messages or not.
+        :param key: Jax PRNGKey to ensure reproducibility. If none, it is set randomly.
 
         :returns: a list of three values, train_loss, test_loss, time_taken.
         """
@@ -96,7 +99,8 @@ class VAETrainer:
         loss_test = []
         t_start = time.time()
 
-        key = jax.random.PRNGKey(random.randint(0, 9999))
+        if key is None:
+            key = jax.random.PRNGKey(random.randint(0, 9999))
         z_key, test_key = jax.random.split(key, 2)
 
         for iterations in range(num_iterations):

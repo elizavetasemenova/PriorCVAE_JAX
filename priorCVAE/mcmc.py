@@ -66,7 +66,7 @@ def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decod
     mcmc = MCMC(
         kernel,
         num_warmup=args["num_warmup"],
-        num_samples=args["num_samples"],
+        num_samples=args["num_mcmc_samples"],
         num_chains=args["num_chains"],
         thinning=args["thinning"],
         progress_bar=False if "NUMPYRO_SPHINXBUILD" in os.environ else True,
