@@ -26,7 +26,9 @@ class MLPDecoder(Decoder):
 
     @nn.compact
     def __call__(self, z: jnp.ndarray) -> jnp.ndarray:
-        z = nn.Dense(self.hidden_dim, name="dec_hidden")(z)
-        z = nn.leaky_relu(z)
+        z = nn.Dense(100, name="dec_hidden1")(z)
+        z = nn.sigmoid(z)
+        z = nn.Dense(1000, name="dec_hidden2")(z)
+        z = nn.sigmoid(z)
         z = nn.Dense(self.out_dim, name="dec_out")(z)
         return z
