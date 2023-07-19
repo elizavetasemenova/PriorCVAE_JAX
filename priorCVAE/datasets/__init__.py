@@ -1,1 +1,1 @@
-from .gp_dataset import GPDataset
+from .gp_dataset import GPDataset, MGPDataset, CGPDataset
