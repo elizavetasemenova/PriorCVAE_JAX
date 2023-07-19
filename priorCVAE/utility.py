@@ -3,8 +3,12 @@ File contains utility functions used throughout the package
 """
 
 from typing import Sequence, Union, List
+import random
 
+import orbax
+from flax.training import orbax_utils
 import jax.numpy as jnp
+from flax.core import FrozenDict
 import numpy as np
 import torch
 import torch.utils.data as data
@@ -26,7 +30,7 @@ def numpy_collate(batch):
 
 
 def create_data_loaders(*datasets: Sequence[data.Dataset], train: Union[bool, Sequence[bool]] = True,
-                        batch_size: int = 128, num_workers: int = 4, seed: int = 42) -> List[data.DataLoader]:
+                        batch_size: int = 128, num_workers: int = 4, seed: int = None) -> List[data.DataLoader]:
     """
     Creates data loaders used in JAX for a set of datasets.
     
@@ -40,6 +44,9 @@ def create_data_loaders(*datasets: Sequence[data.Dataset], train: Union[bool, Se
     Details: https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/guide4/Research_Projects_with_JAX.html
 
     """
+
+    if seed is None:
+        seed = random.randint(0, 9999)
 
     loaders = []
     if not isinstance(train, (list, tuple)):
@@ -78,5 +85,21 @@ def sq_euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
 
     assert x.shape[-1] == y.shape[-1]
 
-    dist = jnp.sum(jnp.square(x), axis=-1)[..., None] + jnp.sum(jnp.square(y), axis=-1)[..., None].T - 2 * jnp.dot(x, y.T)
+    dist = jnp.sum(jnp.square(x), axis=-1)[..., None] + jnp.sum(jnp.square(y), axis=-1)[..., None].T - 2 * jnp.dot(x,
+                                                                                                                   y.T)
     return dist
+
+
+def save_model_params(ckpt_dir: str, params: FrozenDict):
+    """Save the model parameters in the specified directory."""
+    ckpt = {'params': params}
+    orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
+    save_args = orbax_utils.save_args_from_target(ckpt)
+    orbax_checkpointer.save(ckpt_dir, ckpt, save_args=save_args)
+
+
+def load_model_params(ckpt_dir: str) -> FrozenDict:
+    """Load the model parameters"""
+    orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
+    restored_params = orbax_checkpointer.restore(ckpt_dir)['params']
+    return restored_params

@@ -15,22 +15,23 @@ from numpyro.infer import init_to_median, MCMC, NUTS
 from priorCVAE.models import Decoder
 
 
-def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict):
+def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict, c: jnp.array = None):
     """
     VAE numpyro model used for running MCMC inference.
 
     :param args: a dictionary with the arguments required for MCMC.
     :param decoder: a decoder model.
     :param decoder_params: a dictionary with decoder network parameters.
+    :param c: a Jax ndarray used for cVAE of the shape, (N, C).
     """
-
-    # assert ["latent_dim", "hidden_dim", "input_dim", "conditional", "y_obs", "obs_idx"] in args.keys()
 
     z_dim = args["latent_dim"]
     y = args["y_obs"]
     obs_idx = args["obs_idx"]
 
-    z = numpyro.sample("z", npdist.Normal(jnp.zeros(z_dim), jnp.ones(z_dim)))
+    z = numpyro.sample("z", npdist.Normal(jnp.zeros(z_dim), jnp.ones(z_dim)))  # (Z_dim,)
+    if c is not None:
+        z = jnp.concatenate([z, c], axis=0)  # (Z_dim + C, )
 
     f = numpyro.deterministic("f", decoder.apply({'params': decoder_params}, z))
     sigma = numpyro.sample("sigma", npdist.HalfNormal(0.1))
@@ -42,7 +43,7 @@ def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict)
 
 
 def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decoder: Decoder, decoder_params: Dict,
-                 verbose: bool = True) -> [MCMC, jnp.ndarray, float]:
+                 c: jnp.array = None, verbose: bool = True) -> [MCMC, jnp.ndarray, float]:
     """
     Run MCMC inference using VAE decoder.
 
@@ -51,6 +52,7 @@ def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decod
     :param args: a dictionary with the arguments required for MCMC.
     :param decoder: a decoder model.
     :param decoder_params: a dictionary with decoder network parameters.
+    :param c: a Jax ndarray used for cVAE of the shape, (N, C).
     :param verbose: if True, prints the MCMC summary.
 
     Returns:
@@ -64,13 +66,13 @@ def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decod
     mcmc = MCMC(
         kernel,
         num_warmup=args["num_warmup"],
-        num_samples=args["num_samples"],
+        num_samples=args["num_mcmc_samples"],
         num_chains=args["num_chains"],
         thinning=args["thinning"],
         progress_bar=False if "NUMPYRO_SPHINXBUILD" in os.environ else True,
     )
     start = time.time()
-    mcmc.run(rng_key, args, decoder, decoder_params)
+    mcmc.run(rng_key, args, decoder, decoder_params, c)
     t_elapsed = time.time() - start
     if verbose:
         mcmc.print_summary(exclude_deterministic=False)

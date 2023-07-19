@@ -1,7 +1,6 @@
 """
 File contains various loss functions.
 """
-
 import jax
 import jax.numpy as jnp
 
@@ -32,6 +31,10 @@ def scaled_sum_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_va
 
     L(y, y') = 0.5 * sum(((y - y')^2) / vae_var)
 
+    Note: This loss can be considered as negative log-likelihood as:
+
+    -1 * log N (y | y', sigma) \approx -0.5 ((y - y'/sigma)^2)
+
     :param y: the ground-truth value of y with shape (N, D).
     :param reconstructed_y: the reconstructed value of y with shape (N, D).
     :param vae_var: a float value representing the varianc of the VAE.
@@ -43,17 +46,16 @@ def scaled_sum_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_va
 
 
 @jax.jit
-def mean_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_var: float = 1.) -> jnp.ndarray:
+def mean_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarray:
     """
-    Mean squared loss, MSE/var i.e.
+    Mean squared loss, MSE i.e.
 
-    L(y, y') = mean(((y - y')^2) / vae_var)
+    L(y, y') = mean(((y - y')^2))
 
     :param y: the ground-truth value of y with shape (N, D).
     :param reconstructed_y: the reconstructed value of y with shape (N, D).
-    :param vae_var: a float value representing the varianc of the VAE.
 
     :returns: the loss value
     """
     assert y.shape == reconstructed_y.shape
-    return jnp.mean((reconstructed_y - y)**2 / vae_var)
+    return jnp.mean((reconstructed_y - y)**2)

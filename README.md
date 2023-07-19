@@ -9,13 +9,43 @@ This repository is based on the following two papers:
 
 We recommend setting up a [conda](https://docs.conda.io/projects/conda/en/latest/index.html) environment.
 ```shell
-conda create -n prior_cvae python==3.10
+conda create -n prior_cvae -c conda-forge python==3.10.1
 conda activate prior_cvae
 ```
 
 Within the virtual environment, install the dependencies by running
 ```shell
 pip install -r requirements.txt
+```
+
+**Note:** The code has been tested with `Python 3.10.1`. There is a known issue with `Python 3.10.0` related to loading a saved model  because of the [bug](https://bugs.python.org/issue45416) which is resolved in `Python 3.10.1`. 
+
+## Install the package
+
+```shell
+python setup.py install
+```
+
+To install in the develop mode:
+```shell
+python setup.py develop
+```
+
+
+## Examples
+
+Example notebooks can be found in the `examples\` directory. Remember to install the priorCVAE package before running the notebooks.
+
+Sample command:
+```shell
+cd examples/
+jupyter notebook GP-PriorCVAE.ipynb
+```
+
+**Note:** For experiments it is recommended to use float64 precision to avoid numerical instability:
+```python
+import jax.config as config
+config.update("jax_enable_x64", True)
 ```
 
 ## To runs tests
