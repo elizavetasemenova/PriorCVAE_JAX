@@ -27,8 +27,10 @@ class MLPEncoder(Encoder):
 
     @nn.compact
     def __call__(self, y: jnp.ndarray) -> (jnp.ndarray, jnp.ndarray):
-        y = nn.Dense(self.hidden_dim, name="enc_hidden")(y)
-        y = nn.leaky_relu(y)
+        y = nn.Dense(1000, name="enc_hidden1")(y)
+        y = nn.sigmoid(y)
+        y = nn.Dense(100, name="enc_hidden2")(y)
+        y = nn.sigmoid(y)
         z_mu = nn.Dense(self.latent_dim, name="z_mu")(y)
         z_logvar = nn.Dense(self.latent_dim, name="z_logvar")(y)
         return z_mu, z_logvar
