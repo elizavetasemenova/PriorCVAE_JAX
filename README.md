@@ -42,6 +42,11 @@ cd examples/
 jupyter notebook GP-PriorCVAE.ipynb
 ```
 
+**Note:** For experiments it is recommended to use float64 precision to avoid numerical instability:
+```python
+import jax.config as config
+config.update("jax_enable_x64", True)
+```
 
 ## To runs tests
 

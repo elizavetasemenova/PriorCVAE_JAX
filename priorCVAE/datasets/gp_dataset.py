@@ -38,7 +38,7 @@ class GPDataset:
         self.kernel = kernel
         self.x = jnp.linspace(self.x_lim_low, self.x_lim_high, self.n_data)
 
-    def simulatedata(self, n_samples: int = 100000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+    def simulatedata(self, n_samples: int = 10000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """
         Simulate data from the GP.
 
