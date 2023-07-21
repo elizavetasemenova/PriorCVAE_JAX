@@ -1,0 +1,8 @@
+name: Matern32Kernel
+lengthscale: 0.2
+variance: 1.0
+
+instance:
+  _target_: priorCVAE.priors.Matern32
+  lengthscale: ${kernel.lengthscale}
+  variance: ${kernel.variance}

@@ -1,10 +1,11 @@
 import numpy as np
 import scipy.stats as stats
 import jax.numpy as jnp
+import jax
 
 
 def mean_bootstrap_interval(
-    samples: jnp.ndarray, confidence_level: float=0.95, axis=0
+    samples: np.ndarray, confidence_level: float=0.95, axis=0
 ):
     """
     Compute the confidence interval for the mean of the data using bootstrap resampling.
@@ -31,26 +32,25 @@ def mean_bootstrap_interval(
     return ci_lower, ci_upper
 
 
-def frobenius_norm_of_kernel_diff(samples: jnp.ndarray, kernel: jnp.ndarray):
+@jax.jit
+def frobenius_norm_of_diff(mat1: jnp.ndarray, mat2: jnp.ndarray):
     """
-    Computes the frobenius norm of the difference of a covariance matrix and kernel.
+    Computes the frobenius norm of the difference of two matrices.
 
     Args:
-        samples: array of shape (N, D)
-        kernel: array of shape (D, D)
+        mat1: array of shape (D, D)
+        mat2: array of shape (D, D)
     Returns:
-        norm: Norm of the difference between the kernel matrix and the covariance matrix.
+        norm: Norm of the difference.
     """
 
-    covariance = compute_empirical_covariance(samples)
-
-    diff = kernel - covariance
-    norm = np.linalg.norm(diff)
+    diff = mat1 - mat2
+    norm = jnp.linalg.norm(diff)
 
     return norm
 
-
-def compute_empirical_covariance(samples: jnp.ndarray):
+@jax.jit
+def sample_covariance(samples: jnp.ndarray):
     """
     Computes the empirical covariance matrix from samples.
 
@@ -60,6 +60,6 @@ def compute_empirical_covariance(samples: jnp.ndarray):
         :param covariance: Empirical covariance matrix of the samples.
     """
 
-    covariance = np.cov(np.transpose(samples))
+    covariance = jnp.cov(jnp.transpose(samples))
 
     return covariance

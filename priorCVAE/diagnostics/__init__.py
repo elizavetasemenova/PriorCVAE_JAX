@@ -1,2 +1,1 @@
-from .gp_metrics import compute_empirical_covariance, frobenius_norm_of_kernel_diff, mean_bootstrap_interval
-from .plot import plot_realizations, plot_covariance_matrix
+from .gp_metrics import sample_covariance, frobenius_norm_of_diff, mean_bootstrap_interval

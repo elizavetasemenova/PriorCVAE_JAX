@@ -1,27 +1,15 @@
 import jax
 import jax.numpy as jnp
-from jax import random
-import scipy.stats as stats
-from flax.training import train_state
-import optax
 import wandb
 import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
-from priorCVAE.diagnostics import (
-    compute_empirical_covariance,
-    frobenius_norm_of_kernel_diff,
-    plot_realizations,
-    plot_covariance_matrix,
-)
-from priorCVAE.utility import create_data_loaders
-from priorCVAE.losses import scaled_sum_squared_loss, kl_divergence
 from priorCVAE.trainer import VAETrainer
 from model_validation.utils import generate_decoder_samples
-from model_validation.tests.tests import (
-    mean_bootstrap_interval_contains_zero,
-)
+
+from jax.config import config
+config.update("jax_enable_x64", True)
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="defaults")
@@ -73,8 +61,9 @@ def main(cfg: DictConfig):
         cfg.model.latent_dim,
     )
 
-    test_runner.run_tests(samples)
-    test_runner.run_visualizations(samples)
+    test_set = gp_generator.simulatedata(n_samples=10000)
+    test_runner.run_tests(samples, test_set)
+    test_runner.run_visualizations(samples, test_set)
 
     wandb.run.summary["training_time"] = time_taken
 

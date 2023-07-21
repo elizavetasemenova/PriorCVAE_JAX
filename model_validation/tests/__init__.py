@@ -1,1 +1,1 @@
-from .test_runners import *
+from .test_runners import SquaredExponentialTestRunner, MaternTestRunner

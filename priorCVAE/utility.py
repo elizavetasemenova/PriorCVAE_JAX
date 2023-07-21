@@ -70,7 +70,7 @@ def sq_euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
 
     d(x, y) = sqrt(x**2 + y**2.T - 2 * <x, transpose(y)>)
 
-    The implementation uses the braodcasting functionality of jax.numpy for mulit-dimensionality calculation.
+    The implementation uses the broadcasting functionality of jax.numpy for mulit-dimensionality calculation.
 
     :param x: Jax ndarray of the shape, (N_1, D).
     :param y: Jax ndarray of the shape, (N_2, D).
