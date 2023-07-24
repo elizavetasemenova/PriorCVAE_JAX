@@ -6,11 +6,12 @@ import pytest
 import jax
 import jax.numpy as jnp
 import numpy as np
+import flax.linen as nn
 
 from priorCVAE.models import MLPEncoder, MLPDecoder, VAE
 
 
-@pytest.fixture(name="hidden_dimension", params=[2, 8])
+@pytest.fixture(name="hidden_dimension", params=[2, 8, [8, 5], [10, 4, 2]])
 def _hidden_dimension_fixture(request):
     return request.param
 
@@ -22,6 +23,13 @@ def _latent_dimension_fixture(request):
 
 @pytest.fixture(name="data_dimension", params=[2, 8])
 def _data_dimension_fixture(request):
+    return request.param
+
+
+@pytest.fixture(name="hidden_dim_activations", params=[[2, nn.sigmoid], [[4], [nn.sigmoid]],
+                                                       [[10, 4, 2], nn.leaky_relu],
+                                                       [[5, 3, 1], [nn.sigmoid, nn.leaky_relu, nn.sigmoid]]])
+def _hidden_dim_activations_fixture(request):
     return request.param
 
 
@@ -93,3 +101,24 @@ def test_vae_reparameterize(num_data, data_dimension, hidden_dimension, latent_d
     expected_x = decoder.apply({"params": params["decoder"]}, z_sample)
 
     np.testing.assert_array_almost_equal(x, expected_x)
+
+
+def test_dense_vae_structure(hidden_dim_activations, latent_dimension, data_dimension, num_data):
+    """
+    Test VAE model structure when multiple hidden layers and activation functions are passed.
+    """
+    hidden_dimension, activation_fn = hidden_dim_activations
+    encoder = MLPEncoder(hidden_dim=hidden_dimension, latent_dim=latent_dimension, activations=activation_fn)
+    decoder = MLPDecoder(hidden_dim=hidden_dimension, out_dim=data_dimension, activations=activation_fn)
+
+    vae = VAE(encoder=encoder, decoder=decoder)
+    x = jnp.zeros((num_data, data_dimension))
+    rng = jax.random.PRNGKey(0)
+    params = vae.init(rng, x, rng)['params']
+
+    variables = {"params": params}
+    x, z_m, z_logvar = vae.apply(variables, x, rng)
+
+    assert x.shape == (num_data, data_dimension)
+    assert z_m.shape == (num_data, latent_dimension)
+    assert z_logvar.shape == (num_data, latent_dimension)
