@@ -42,35 +42,3 @@ class MLPDecoder(Decoder):
             z = activation_fn(z)
         z = nn.Dense(self.out_dim, name="dec_out")(z)
         return z
-
-
-class MLPDecoderTwoHeads(Decoder):
-    """
-    MLP decoder model with two heads with the following structure:
-
-    for _ in hidden_dims:
-        z = Activation(Dense(z))
-    y_m = Dense(z)
-    y_logvar = Dense(z)
-
-    Note: For the same activation functions for all hidden layers, pass a single function rather than a list.
-
-    """
-    hidden_dim: Union[Tuple[int], int]
-    out_dim: int
-    activations: Union[Tuple, PjitFunction] = nn.sigmoid
-
-    @nn.compact
-    def __call__(self, z: jnp.ndarray) -> [jnp.ndarray, jnp.ndarray]:
-        # If a single activation function or single hidden dimension is passed.
-        hidden_dims = [self.hidden_dim] if isinstance(self.hidden_dim, int) else self.hidden_dim
-        activations = [self.activations] * len(hidden_dims) if not isinstance(self.activations,
-                                                                              Tuple) else self.activations
-
-        for i, (hidden_dim, activation_fn) in enumerate(zip(hidden_dims, activations)):
-            z = nn.Dense(hidden_dim, name=f"dec_hidden_{i}")(z)
-            z = activation_fn(z)
-
-        y_m = nn.Dense(self.out_dim, name="dec_mean")(z)
-        y_logvar = nn.Dense(self.out_dim, name="dec_logvar")(z)
-        return y_m, y_logvar
