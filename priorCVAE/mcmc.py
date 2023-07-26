@@ -4,7 +4,9 @@ File contains the code for Monte Carlo Markov Chain (MCMC) used for inference.
 from typing import Dict
 import time
 import os
+import random as rnd
 
+import jax
 import numpy as np
 from jax.random import KeyArray
 import jax.numpy as jnp
@@ -15,7 +17,8 @@ from numpyro.infer import init_to_median, MCMC, NUTS
 from priorCVAE.models import Decoder
 
 
-def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict, c: jnp.array = None):
+def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict, c: jnp.array = None,
+                             sample_decoder: None = False):
     """
     VAE numpyro model used for running MCMC inference.
 
@@ -23,17 +26,27 @@ def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict,
     :param decoder: a decoder model.
     :param decoder_params: a dictionary with decoder network parameters.
     :param c: a Jax ndarray used for cVAE of the shape, (N, C).
+    :param sample_decoder: if True, sample from the decoder.
     """
 
     z_dim = args["latent_dim"]
     y = args["y_obs"]
     obs_idx = args["obs_idx"]
+    vae_var = args["vae_var"]
 
     z = numpyro.sample("z", npdist.Normal(jnp.zeros(z_dim), jnp.ones(z_dim)))  # (Z_dim,)
     if c is not None:
         z = jnp.concatenate([z, c], axis=0)  # (Z_dim + C, )
 
     f = numpyro.deterministic("f", decoder.apply({'params': decoder_params}, z))
+
+    if sample_decoder:
+        out_std = jnp.sqrt(vae_var * jnp.ones_like(f))
+        key = jax.random.PRNGKey(rnd.randint(0, 9999))
+        rng, z_rng, init_rng = jax.random.split(key, 3)
+        eps = jax.random.normal(rng, out_std.shape)
+        f = f + eps * out_std
+
     sigma = numpyro.sample("sigma", npdist.HalfNormal(0.1))
 
     if y is None:  # during prediction
@@ -43,7 +56,7 @@ def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict,
 
 
 def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decoder: Decoder, decoder_params: Dict,
-                 c: jnp.array = None, verbose: bool = True) -> [MCMC, jnp.ndarray, float]:
+                 c: jnp.array = None, sample_decoder: bool = False, verbose: bool = True) -> [MCMC, jnp.ndarray, float]:
     """
     Run MCMC inference using VAE decoder.
 
@@ -53,6 +66,7 @@ def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decod
     :param decoder: a decoder model.
     :param decoder_params: a dictionary with decoder network parameters.
     :param c: a Jax ndarray used for cVAE of the shape, (N, C).
+    :param sample_decoder: if True, sample from the decoder.
     :param verbose: if True, prints the MCMC summary.
 
     Returns:
@@ -72,7 +86,7 @@ def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decod
         progress_bar=False if "NUMPYRO_SPHINXBUILD" in os.environ else True,
     )
     start = time.time()
-    mcmc.run(rng_key, args, decoder, decoder_params, c)
+    mcmc.run(rng_key, args, decoder, decoder_params, c, sample_decoder)
     t_elapsed = time.time() - start
     if verbose:
         mcmc.print_summary(exclude_deterministic=False)
