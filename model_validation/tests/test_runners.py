@@ -1,8 +1,23 @@
+"""
+File contains classes used to run the correct tests and visualizations for a kernel.
+"""
+
 from abc import ABC, abstractmethod
 import wandb
 
-from .tests import mean_bootstrap_interval_contains_zero, norm_of_kernel_diff, mmd_two_sample_test
-from .visualizations import plot_correlation, plot_vae_realizations, plot_kernel, plot_covariance
+from .tests import (
+    bootstrap_mean_test,
+    norm_of_kernel_diff,
+    mmd_two_sample_test,
+    bootstrap_covariance_test,
+)
+from .visualizations import (
+    plot_correlation,
+    plot_vae_realizations,
+    plot_kernel,
+    plot_covariance,
+)
+
 
 class AbstractTestRunner(ABC):
     def __init__(self, kernel, kernel_name, grid):
@@ -24,9 +39,10 @@ class SquaredExponentialTestRunner(AbstractTestRunner):
     def __init__(self, kernel, kernel_name, grid):
         super().__init__(kernel, kernel_name, grid)
         self.tests = [
-            mean_bootstrap_interval_contains_zero,
+            bootstrap_mean_test,
             norm_of_kernel_diff,
             mmd_two_sample_test,
+            bootstrap_covariance_test,
         ]
 
         self.visualizations = [
@@ -39,21 +55,32 @@ class SquaredExponentialTestRunner(AbstractTestRunner):
     def run_tests(self, samples, test_set):
         test_samples = test_set[1]
         for test in self.tests:
-            result = test(samples=samples, kernel=self.kernel, gp_samples=test_samples, grid=self.grid)
+            result = test(
+                samples=samples,
+                kernel=self.kernel,
+                gp_samples=test_samples,
+                grid=self.grid,
+            )
             wandb.run.summary[test.__name__] = result
 
     def run_visualizations(self, samples, test_set):
         test_samples = test_set[1]
         for visualization in self.visualizations:
-            visualization(samples=samples, kernel=self.kernel, grid=self.grid, kernel_name=self.kernel_name, gp_samples=test_samples)
-        
+            visualization(
+                samples=samples,
+                kernel=self.kernel,
+                grid=self.grid,
+                kernel_name=self.kernel_name,
+                gp_samples=test_samples,
+            )
+
 
 class MaternTestRunner(AbstractTestRunner):
     def __init__(self, kernel, kernel_name, grid):
         super().__init__(kernel, kernel_name, grid)
 
     def run_tests(self, samples):
-        print('run matern tests')
+        print("run matern tests")
         pass
 
     def run_visualizations(self, samples):

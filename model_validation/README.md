@@ -1,13 +1,13 @@
 # Model Validation
 
-This directory contains tests for validating the performance of our models. Weights & Biases is used to track the performance of models and the results of experiments.
+This directory contains tests for validating the performance of our models. [Weights & Biases](https://docs.wandb.ai) is used to track the performance of models and the results of experiments. [Hydra](https://hydra.cc/docs/intro/) is used for configuration.
 
 ## Getting Started
 
-To install MLflow run:
+To install additional requirements:
 
 ```bash
-pip install -r requirements.txt
+pip install -r model_validation/requirements.txt
 ```
 
 ## Running an Experiment
@@ -17,12 +17,3 @@ From the project's root directory run:
 ```bash
 python -m model_validation.run
 ```
-
-## Launching the MLflow UI
-
-To start the MLflow UI run:
-```bash
-mlflow ui
-```
-
-The UI can be accessed at `http://127.0.0.1:5000`.

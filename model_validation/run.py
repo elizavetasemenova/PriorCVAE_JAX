@@ -1,5 +1,4 @@
 import jax
-import jax.numpy as jnp
 import wandb
 import hydra
 from hydra.utils import instantiate
@@ -16,11 +15,8 @@ config.update("jax_enable_x64", True)
 def main(cfg: DictConfig):
     print(OmegaConf.to_yaml(cfg))
 
-    
     model = instantiate(cfg.model, _recursive_=True, _convert_="object")["instance"]
     optimizer = instantiate(cfg.optimizer)["instance"]
-    # x = instantiate(cfg.grid)["instance"]
-    # kernel = instantiate(cfg.kernel)["instance"](x, x)
 
     test_runner = instantiate(cfg.test_runner)["instance"]
 
@@ -61,9 +57,9 @@ def main(cfg: DictConfig):
         cfg.model.latent_dim,
     )
 
-    test_set = gp_generator.simulatedata(n_samples=10000)
-    test_runner.run_tests(samples, test_set)
-    test_runner.run_visualizations(samples, test_set)
+    test_samples = gp_generator.simulatedata(n_samples=cfg.test.n_samples)
+    test_runner.run_tests(samples, test_samples)
+    test_runner.run_visualizations(samples, test_samples)
 
     wandb.run.summary["training_time"] = time_taken
 
