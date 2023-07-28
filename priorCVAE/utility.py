@@ -12,6 +12,7 @@ from flax.core import FrozenDict
 import numpy as np
 import torch
 import torch.utils.data as data
+from sklearn.manifold import TSNE
 
 
 def numpy_collate(batch):
@@ -103,3 +104,10 @@ def load_model_params(ckpt_dir: str) -> FrozenDict:
     orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
     restored_params = orbax_checkpointer.restore(ckpt_dir)['params']
     return restored_params
+
+
+def perform_tSNE(X: jnp.ndarray, n_dimensions: int = 2) -> jnp.ndarray:
+    """
+    Fit tSNE, predict on the data and return the low-dimensional output.
+    """
+    return TSNE(n_components=n_dimensions).fit_transform(X)

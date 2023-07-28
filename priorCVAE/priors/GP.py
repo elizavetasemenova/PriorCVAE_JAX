@@ -9,7 +9,7 @@ from priorCVAE.priors import Kernel, SquaredExponential
 
 
 def GP(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter: float = 1e-5, y=None, noise: bool = False,
-       sample_lengthscale: bool = False):
+       sample_lengthscale: bool = False, lengthscale_options: jnp.ndarray = None):
     """
     Gaussian process numpyro primitive to generate samples from it.
 
@@ -20,11 +20,15 @@ def GP(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter: float = 1e
     :param noise: if True, add noise to the sample. The noise is drawn from the half-normal distribution with
                   variance of 0.1.
     :param sample_lengthscale: if True, sample lenthscale from a Uniform distribution, U(0.01, 0.99).
-
+    :param lengthscale_options: a list of lengthscale options to choose from.
     """
 
     if sample_lengthscale:
-        kernel.lengthscale = numpyro.sample("lengthscale", npdist.Uniform(0.01, 0.99))
+        if lengthscale_options is None:
+            kernel.lengthscale = numpyro.sample("lengthscale", npdist.Uniform(0.01, 0.99))
+        else:
+            idx = numpyro.sample("lengthscale", npdist.discrete.DiscreteUniform(0, lengthscale_options.shape[0] - 1))
+            kernel.lengthscale = lengthscale_options[idx]
 
     k = kernel(x, x)
     k += jitter * jnp.eye(x.shape[0])
