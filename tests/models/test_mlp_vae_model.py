@@ -50,6 +50,7 @@ def test_encoder_model_shape(num_data, data_dimension, hidden_dimension, latent_
 
 def test_decoder_model_shape(num_data, data_dimension, hidden_dimension, latent_dimension):
     """Test the shape of the outputs of Decoder model"""
+    hidden_dimension.reverse() if isinstance(hidden_dimension, list) else hidden_dimension
     decoder = MLPDecoder(hidden_dim=hidden_dimension, out_dim=data_dimension)
     z = jnp.zeros((num_data, latent_dimension))
 
@@ -65,6 +66,7 @@ def test_decoder_model_shape(num_data, data_dimension, hidden_dimension, latent_
 def test_vae_model_shape(num_data, data_dimension, hidden_dimension, latent_dimension):
     """Test the shape of the outputs of VAE model"""
     encoder = MLPEncoder(hidden_dim=hidden_dimension, latent_dim=latent_dimension)
+    hidden_dimension.reverse() if isinstance(hidden_dimension, list) else hidden_dimension
     decoder = MLPDecoder(hidden_dim=hidden_dimension, out_dim=data_dimension)
 
     vae = VAE(encoder=encoder, decoder=decoder)
@@ -83,6 +85,7 @@ def test_vae_model_shape(num_data, data_dimension, hidden_dimension, latent_dime
 def test_vae_reparameterize(num_data, data_dimension, hidden_dimension, latent_dimension):
     """Test the reparameterization of the VAE."""
     encoder = MLPEncoder(hidden_dim=hidden_dimension, latent_dim=latent_dimension)
+    hidden_dimension.reverse() if isinstance(hidden_dimension, list) else hidden_dimension
     decoder = MLPDecoder(hidden_dim=hidden_dimension, out_dim=data_dimension)
 
     vae = VAE(encoder=encoder, decoder=decoder)
@@ -109,6 +112,7 @@ def test_dense_vae_structure(hidden_dim_activations, latent_dimension, data_dime
     """
     hidden_dimension, activation_fn = hidden_dim_activations
     encoder = MLPEncoder(hidden_dim=hidden_dimension, latent_dim=latent_dimension, activations=activation_fn)
+    hidden_dimension.reverse() if isinstance(hidden_dimension, list) else hidden_dimension
     decoder = MLPDecoder(hidden_dim=hidden_dimension, out_dim=data_dimension, activations=activation_fn)
 
     vae = VAE(encoder=encoder, decoder=decoder)

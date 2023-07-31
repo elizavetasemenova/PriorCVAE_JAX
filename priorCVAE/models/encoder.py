@@ -52,7 +52,7 @@ class CNNEncoder(Encoder):
     """
     CNN based encoder with the following structure:
 
-    for _ in hidden_dims:
+    for _ in conv_features:
         y = Pooling(Activation(Convolution(y)))
 
     y = flatten(y)
@@ -70,8 +70,6 @@ class CNNEncoder(Encoder):
     conv_activation: Union[Tuple, PjitFunction] = nn.sigmoid
     conv_stride: Union[int, Tuple[int]] = 2
     conv_kernel_size: Union[Tuple[Tuple[int]], Tuple[int]] = (3, 3)
-    conv_pooling_layer: Union[Tuple, PjitFunction] = nn.pooling.avg_pool
-    conv_pooling_window: Union[Tuple[Tuple[int]], Tuple[int]] = (2, 2)
     activations: Union[Tuple, PjitFunction] = nn.sigmoid
 
     @nn.compact
@@ -85,21 +83,14 @@ class CNNEncoder(Encoder):
                                                                                              Tuple) else self.conv_activation
         conv_stride = [self.conv_stride] * len(self.conv_features) if not isinstance(self.conv_stride,
                                                                                      Tuple) else self.conv_stride
-        conv_pooling_layer = [self.conv_pooling_layer] * len(self.conv_features) if not isinstance(
-            self.conv_pooling_layer,
-            Tuple) else self.conv_pooling_layer
         conv_kernel_size = [self.conv_kernel_size] * len(self.conv_features) if not isinstance(
             self.conv_kernel_size[0], Tuple) else self.conv_kernel_size
-        conv_pooling_window = [self.conv_pooling_window] * len(self.conv_features) if not isinstance(
-            self.conv_pooling_window[0], Tuple) else self.conv_pooling_window
 
         # Conv layers
-        for i, (feat, k_s, stride, activation_fn, pooling_layer, pooling_window) in enumerate(
-                zip(self.conv_features, conv_kernel_size, conv_stride, conv_activation, conv_pooling_layer,
-                    conv_pooling_window)):
-            y = nn.Conv(features=feat, kernel_size=k_s, strides=stride)(y)
+        for i, (feat, k_s, stride, activation_fn) in enumerate(
+                zip(self.conv_features, conv_kernel_size, conv_stride, conv_activation)):
+            y = nn.Conv(features=feat, kernel_size=k_s, strides=stride, padding="VALID")(y)
             y = activation_fn(y)
-            y = pooling_layer(y, window_shape=pooling_window)
 
         # Flatten
         y = y.reshape((y.shape[0], -1))
