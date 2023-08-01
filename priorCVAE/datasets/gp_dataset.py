@@ -6,6 +6,7 @@ Gaussian process dataset.
 import random as rnd
 
 import jax.numpy as jnp
+import jax.random
 from jax import random
 from numpyro.infer import Predictive
 
@@ -59,3 +60,32 @@ class GPDataset:
         gp_draws = jnp.array(all_draws['y'])
 
         return self.x.repeat(n_samples).reshape(self.x.shape[0], n_samples).transpose(), gp_draws, ls_draws
+
+
+class OfflineDataset:
+    """Use offline dataset, and randomly generate a batch from it."""
+
+    def __init__(self, dataset: jnp.ndarray):
+        """
+        Initialize the OfflineDataset class.
+
+        :param dataset: jax ndarray of the dataset
+        """
+        self.dataset = dataset
+
+    def simulatedata(self, n_samples: int = 10000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+        """
+        Make a batch of data from the dataset array.
+
+        :param n_samples: number of samples.
+
+        :returns:
+            - None.
+            - samples.
+            - None.
+        """
+        rng_key, _ = random.split(random.PRNGKey(rnd.randint(0, 9999)))
+
+        batch_data = jax.random.choice(rng_key, self.dataset, [n_samples])
+
+        return None, batch_data, None

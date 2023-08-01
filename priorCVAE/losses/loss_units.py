@@ -59,3 +59,28 @@ def mean_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarr
     """
     assert y.shape == reconstructed_y.shape
     return jnp.mean((reconstructed_y - y)**2)
+
+
+@jax.jit
+def pixel_sum_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarray:
+    """
+    Sum of absolute error between pixels of an image and a mean over batch.
+
+    L(y, y') = mean(sum(y - y'))
+
+    :param y: the ground-truth value of y with shape (N, D, D, C).
+    :param reconstructed_y: the reconstructed value of y with shape (N, D, D, C).
+
+    :returns: the loss value
+    """
+    assert len(y.shape) == 4
+    assert y.shape == reconstructed_y.shape
+
+    N, D, D, C = y.shape
+
+    pixel_diff = jnp.abs(y - reconstructed_y)  # (N, D, D, C)
+    sum_pixel_diff = jnp.sum(pixel_diff.reshape((N, -1)), axis=-1)  # (N, 1)
+    assert sum_pixel_diff.shape == (N, )
+    mean_loss_val = jnp.mean(sum_pixel_diff)
+
+    return mean_loss_val
