@@ -6,7 +6,8 @@ import jax
 import numpy as np
 import jax.numpy as jnp
 
-from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, mean_squared_loss
+from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, mean_squared_loss, square_maximum_mean_discrepancy
+from priorCVAE.priors import SquaredExponential
 
 
 def test_kl_divergence(dimension):
@@ -48,3 +49,45 @@ def test_mean_squared_loss(num_data, dimension):
     expected_val = jnp.mean((y_reconstruction - y)**2)
 
     np.testing.assert_array_almost_equal(vae_loss_val, expected_val, decimal=6)
+
+
+def _true_sq_mmd_value(kernel, x1, x2, full=True):
+    """
+    True Squared MMD value for testing.
+    """
+    x1_n = x1.shape[0]
+    x2_n = x2.shape[0]
+    term1 = 0
+    if full:
+        K_xx = kernel(x1, x1)
+        term1 = (1 / (x1_n * (x1_n - 1))) * (jnp.sum(K_xx) - jnp.trace(K_xx))
+
+    K_yy = kernel(x2, x2)
+    K_xy = kernel(x1, x2)
+
+    term2 = (1 / (x2_n * (x2_n - 1))) * (jnp.sum(K_yy) - jnp.trace(K_yy))
+    term3 = (2 / (x1_n * x2_n)) * jnp.sum(K_xy)
+
+    return term1 + term2 - term3
+
+
+def test_square_maximum_mean_discrepancy(num_data, dimension):
+    """Test square_maximum_mean_discrepancy"""
+    key = jax.random.PRNGKey(random.randint(a=0, b=999))
+    x1 = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.1, maxval=4.)
+    key, _ = jax.random.split(key)
+
+    x2_shape = jax.random.randint(key, (1, ), 2, 10).tolist() + [dimension]
+    key, _ = jax.random.split(key)
+    x2 = jax.random.uniform(key=key, shape=x2_shape, minval=0.1, maxval=4.)
+
+    kernel = SquaredExponential(lengthscale=.2, variance=.5)
+
+    sq_mmd_val_grads = square_maximum_mean_discrepancy(kernel, x1, x2, efficient_grads=True)
+    sq_mmd_val_full = square_maximum_mean_discrepancy(kernel, x1, x2, efficient_grads=False)
+
+    expected_val_grads = _true_sq_mmd_value(kernel, x1, x2, full=False)
+    expected_val_full = _true_sq_mmd_value(kernel, x1, x2, full=True)
+
+    np.testing.assert_array_almost_equal(sq_mmd_val_grads, expected_val_grads, decimal=6)
+    np.testing.assert_array_almost_equal(sq_mmd_val_full, expected_val_full, decimal=6)
