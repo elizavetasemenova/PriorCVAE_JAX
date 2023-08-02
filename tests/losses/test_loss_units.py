@@ -51,7 +51,7 @@ def test_mean_squared_loss(num_data, dimension):
     np.testing.assert_array_almost_equal(vae_loss_val, expected_val, decimal=6)
 
 
-def _true_sq_mmd_value(kernel, x1, x2, full=True):
+def _true_sq_mmd_value(kernel, x1, x2, full: bool = True, biased: bool = False):
     """
     True Squared MMD value for testing.
     """
@@ -60,19 +60,29 @@ def _true_sq_mmd_value(kernel, x1, x2, full=True):
     term1 = 0
     if full:
         K_xx = kernel(x1, x1)
-        term1 = (1 / (x1_n * (x1_n - 1))) * (jnp.sum(K_xx) - jnp.trace(K_xx))
+        if biased:
+            term1 = (1 / (x1_n * x1_n)) * jnp.sum(K_xx)
+        else:
+            term1 = (1 / (x1_n * (x1_n - 1))) * (jnp.sum(K_xx) - jnp.trace(K_xx))
 
     K_yy = kernel(x2, x2)
     K_xy = kernel(x1, x2)
 
-    term2 = (1 / (x2_n * (x2_n - 1))) * (jnp.sum(K_yy) - jnp.trace(K_yy))
+    if biased:
+        term2 = (1 / (x2_n * x2_n)) * jnp.sum(K_yy)
+    else:
+        term2 = (1 / (x2_n * (x2_n - 1))) * (jnp.sum(K_yy) - jnp.trace(K_yy))
+
     term3 = (2 / (x1_n * x2_n)) * jnp.sum(K_xy)
 
     return term1 + term2 - term3
 
 
-def test_square_maximum_mean_discrepancy(num_data, dimension):
-    """Test square_maximum_mean_discrepancy"""
+def test_square_maximum_mean_discrepancy(num_data, dimension, boolean_variable):
+    """
+    Test square_maximum_mean_discrepancy
+    Here boolean variable is used for biased and unbiased version testing.
+    """
     key = jax.random.PRNGKey(random.randint(a=0, b=999))
     x1 = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.1, maxval=4.)
     key, _ = jax.random.split(key)
@@ -81,13 +91,13 @@ def test_square_maximum_mean_discrepancy(num_data, dimension):
     key, _ = jax.random.split(key)
     x2 = jax.random.uniform(key=key, shape=x2_shape, minval=0.1, maxval=4.)
 
-    kernel = SquaredExponential(lengthscale=.2, variance=.5)
+    kernel = SquaredExponential(lengthscale=2., variance=1.)
 
-    sq_mmd_val_grads = square_maximum_mean_discrepancy(kernel, x1, x2, efficient_grads=True)
-    sq_mmd_val_full = square_maximum_mean_discrepancy(kernel, x1, x2, efficient_grads=False)
+    sq_mmd_val_grads = square_maximum_mean_discrepancy(kernel, x1, x2, efficient_grads=True, biased=boolean_variable)
+    sq_mmd_val_full = square_maximum_mean_discrepancy(kernel, x1, x2, efficient_grads=False, biased=boolean_variable)
 
-    expected_val_grads = _true_sq_mmd_value(kernel, x1, x2, full=False)
-    expected_val_full = _true_sq_mmd_value(kernel, x1, x2, full=True)
+    expected_val_grads = _true_sq_mmd_value(kernel, x1, x2, full=False, biased=boolean_variable)
+    expected_val_full = _true_sq_mmd_value(kernel, x1, x2, full=True, biased=boolean_variable)
 
     np.testing.assert_array_almost_equal(sq_mmd_val_grads, expected_val_grads, decimal=6)
     np.testing.assert_array_almost_equal(sq_mmd_val_full, expected_val_full, decimal=6)
