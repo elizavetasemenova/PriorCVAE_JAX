@@ -1,8 +1,9 @@
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest 
 
-from priorCVAE.utility import sq_euclidean_dist
+from priorCVAE.utility import sq_euclidean_dist, create_grid
 
 
 def true_sq_euclidean_distance(x1, x2):
@@ -24,3 +25,18 @@ def test_sq_euclidean_distance(num_data, dimension):
     expected_val = true_sq_euclidean_distance(x1, x2)
 
     np.testing.assert_array_almost_equal(sq_eucliden_dist_val, expected_val, decimal=6)
+
+
+def test_create_grid_1d(num_data):
+    grid = create_grid(num_data)
+    assert grid.shape == (num_data,1)
+
+
+def test_create_grid_2d(num_data):
+    grid = create_grid(num_data, x_dim=2)
+    assert grid.shape == (num_data ** 2, 2)
+
+
+def test_create_grid_invalid_dimensions():
+    with pytest.raises(ValueError, match=r"Dimensions must be 1 or 2, got 3"):
+        create_grid(100, x_dim=3)
