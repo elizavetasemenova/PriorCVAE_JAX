@@ -1,0 +1,2 @@
+_target_: priorCVAE.models.MLPEncoder
+_partial_: True

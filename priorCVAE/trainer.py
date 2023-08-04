@@ -5,7 +5,9 @@ import time
 from typing import List
 from functools import partial
 import random
+import logging
 
+import wandb
 from optax import GradientTransformation
 import jax
 import jax.numpy as jnp
@@ -14,6 +16,8 @@ from flax.training import train_state
 
 from priorCVAE.models import VAE
 from priorCVAE.losses import SquaredSumAndKL, Loss
+
+log = logging.getLogger(__name__)
 
 
 class VAETrainer:
@@ -116,7 +120,10 @@ class VAETrainer:
             loss_test.append(loss_test_value)
 
             if debug and iterations % 10 == 0:
-                print(f'[{iterations + 1:5d}] training loss: {loss_train[-1]:.3f}, test loss: {loss_test[-1]:.3f}')
+                log.info(f'[{iterations + 1:5d}] training loss: {loss_train[-1]:.3f}, test loss: {loss_test[-1]:.3f}')
+                if wandb.run:
+                    wandb.log({"Train Loss": loss_train[-1]}, step=iterations)
+                    wandb.log({"Test Loss": loss_test[-1]}, step=iterations)
 
         t_elapsed = time.time() - t_start
 

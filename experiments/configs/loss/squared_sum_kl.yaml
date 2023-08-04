@@ -1,0 +1,2 @@
+_target_: priorCVAE.losses.SquaredSumAndKL
+_partial_: True

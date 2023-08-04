@@ -1,0 +1,2 @@
+_target_: priorCVAE.trainer.VAETrainer
+_partial_: True

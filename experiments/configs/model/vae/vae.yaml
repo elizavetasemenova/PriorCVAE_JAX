@@ -1,0 +1,2 @@
+_target_: priorCVAE.models.VAE
+_partial_: True

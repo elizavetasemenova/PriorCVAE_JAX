@@ -1,0 +1,3 @@
+_target_: priorCVAE.priors.SquaredExponential
+lengthscale: 1.
+variance: 1.
