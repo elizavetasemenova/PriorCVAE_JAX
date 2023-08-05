@@ -1,0 +1,3 @@
+_target_: priorCVAE.priors.Matern52
+lengthscale: 1.
+variance: 1.
