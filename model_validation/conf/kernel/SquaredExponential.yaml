@@ -1,5 +1,4 @@
-name: SquaredExponentialKernel
-lengthscale: 0.2
+lengthscale: 1.0
 variance: 1.0
 
 instance:

@@ -1,12 +1,16 @@
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import seaborn as sns
 import numpy as np
 import jax.numpy as jnp
 import scipy.stats as stats
 from typing import Tuple
+import wandb
 
 
 def plot_realizations(grid: jnp.ndarray, realizations: jnp.ndarray, title='', figsize=(4,3)):
+    """Plot realizations sampled from a VAE."""
+
     fig, ax = plt.subplots(figsize=figsize)
     ax.plot(grid, realizations[:15].T)
     ax.plot(grid, realizations.mean(axis=0), c='black')
@@ -15,9 +19,11 @@ def plot_realizations(grid: jnp.ndarray, realizations: jnp.ndarray, title='', fi
     ax.set_title(title)
     return fig, ax
 
-def plot_heatmap(matrix: jnp.ndarray, title: str ='', figsize: Tuple[float, float]=(8,6)):
-    """ Plot a heatmap of the input matrix. """
 
+def plot_heatmap(matrix: jnp.ndarray, title: str ='', figsize: Tuple[float, float]=(8,6)):
+    """Plot a heatmap of the input matrix."""
+
+    assert len(matrix.shape) == 2
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=figsize)
     sns.heatmap(matrix, annot=False, fmt='g', cmap='coolwarm', ax=ax)
     ax.set_title(title)
@@ -49,3 +55,17 @@ def mean_bootstrap_interval(
     ci_lower, ci_upper = res.confidence_interval
 
     return ci_lower, ci_upper
+
+
+def wandb_log_figure(fig: Figure, name: str):
+    """
+    Log a matplotlib figure to wandb.
+
+    Image metadata is removed from the wandb summary since it does not
+    need to be shown in the summary table.
+    """
+    if wandb.run is not None:
+        wandb.log({name: wandb.Image(fig)})
+
+        # remove media metadata from wandb summary
+        del wandb.run.summary[name]

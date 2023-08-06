@@ -5,7 +5,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
 from priorCVAE.trainer import VAETrainer
-from model_validation.utils import generate_decoder_samples
+from priorCVAE.utility import generate_decoder_samples
 
 from jax.config import config
 config.update("jax_enable_x64", True)
@@ -22,10 +22,11 @@ def main(cfg: DictConfig):
 
     gp_generator = instantiate(cfg.dataset)["instance"]
 
-    wandb.config = OmegaConf.to_container(
-        cfg, resolve=True, throw_on_missing=True
-    )
-    wandb.init(project=cfg.wandb.project, config=wandb.config)
+    if cfg.wandb.use_wandb:
+        wandb.config = OmegaConf.to_container(
+            cfg, resolve=True, throw_on_missing=True
+        )
+        wandb.init(project=cfg.wandb.project, config=wandb.config)
 
     key = jax.random.PRNGKey(0)
     init_key, test_key = jax.random.split(key, 2)
@@ -45,8 +46,9 @@ def main(cfg: DictConfig):
     )
 
     # TODO: remove when trainer supports logging
-    for train, test in zip(train_loss, test_loss):
-        wandb.log({"train_loss": train, "test_loss": test})
+    if wandb.run is not None:
+        for train, test in zip(train_loss, test_loss):
+            wandb.log({"train_loss": train, "test_loss": test})
 
     decoder_params = trainer.state.params["decoder"]
     samples = generate_decoder_samples(
@@ -61,7 +63,8 @@ def main(cfg: DictConfig):
     test_runner.run_tests(samples, test_samples)
     test_runner.run_visualizations(samples, test_samples)
 
-    wandb.run.summary["training_time"] = time_taken
+    if wandb.run is not None:
+        wandb.run.summary["training_time"] = time_taken
 
 if __name__ == "__main__":
     main()

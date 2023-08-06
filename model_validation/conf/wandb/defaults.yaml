@@ -1,1 +1,2 @@
-project: test
+project: priorCVAE_diagnostics
+use_wandb: True

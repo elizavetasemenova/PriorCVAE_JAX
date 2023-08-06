@@ -20,10 +20,10 @@ from .visualizations import (
 
 
 class AbstractTestRunner(ABC):
-    def __init__(self, kernel, kernel_name, grid):
+    def __init__(self, kernel, grid):
         self.kernel = kernel
         self.kernel_matrix = kernel(grid, grid)
-        self.kernel_name = kernel_name
+        self.kernel_name = kernel.__class__.__name__
         self.grid = grid
 
     @abstractmethod
@@ -36,8 +36,8 @@ class AbstractTestRunner(ABC):
 
 
 class SquaredExponentialTestRunner(AbstractTestRunner):
-    def __init__(self, kernel, kernel_name, grid):
-        super().__init__(kernel, kernel_name, grid)
+    def __init__(self, kernel, grid):
+        super().__init__(kernel, grid)
         self.tests = [
             bootstrap_mean_test,
             norm_of_kernel_diff,
@@ -58,10 +58,13 @@ class SquaredExponentialTestRunner(AbstractTestRunner):
             result = test(
                 samples=samples,
                 kernel=self.kernel,
-                gp_samples=test_samples,
+                target_samples=test_samples,
                 grid=self.grid,
             )
-            wandb.run.summary[test.__name__] = result
+            if wandb.run is not None:
+                wandb.run.summary[test.__name__] = result
+            else:
+                print(f"{test.__name__}: {result}")
 
     def run_visualizations(self, samples, test_set):
         test_samples = test_set[1]
@@ -76,8 +79,8 @@ class SquaredExponentialTestRunner(AbstractTestRunner):
 
 
 class MaternTestRunner(AbstractTestRunner):
-    def __init__(self, kernel, kernel_name, grid):
-        super().__init__(kernel, kernel_name, grid)
+    def __init__(self, kernel, grid):
+        super().__init__(kernel, grid)
 
     def run_tests(self, samples):
         print("run matern tests")

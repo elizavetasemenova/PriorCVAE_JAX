@@ -2,16 +2,19 @@
 File contains utility functions used throughout the package
 """
 
-from typing import Sequence, Union, List
+from typing import Sequence, Union, List, Dict
 import random
-
 import orbax
 from flax.training import orbax_utils
 import jax.numpy as jnp
+from jax import random
+from jax.random import KeyArray
 from flax.core import FrozenDict
 import numpy as np
 import torch
 import torch.utils.data as data
+
+from priorCVAE.models import Decoder
 
 
 def numpy_collate(batch):
@@ -103,3 +106,26 @@ def load_model_params(ckpt_dir: str) -> FrozenDict:
     orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
     restored_params = orbax_checkpointer.restore(ckpt_dir)['params']
     return restored_params
+
+
+def generate_decoder_samples(key: KeyArray, decoder_params: Dict, decoder: Decoder, num_samples: int, latent_dim: int):
+    """
+    Generate samples from the decoder.
+    
+    :param key: Jax random key.
+    :param decoder_params: decoder parameters.
+    :param decoder: decoder model.
+    :param num_samples: number of samples to generate.
+    :param latent_dim: dimension of the latent space.
+
+    :return: generated samples.
+    """
+    z = random.normal(key, (num_samples, latent_dim))
+    z = jnp.array(z)
+    x = decode(decoder_params, decoder, z)
+    return x
+
+
+def decode(decoder_params: Dict, decoder: Decoder, z: jnp.ndarray):
+    """Decode a latent vector z."""
+    return decoder.apply({'params': decoder_params}, z)  

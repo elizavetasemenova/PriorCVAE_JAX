@@ -2,6 +2,6 @@ lengthscale: 1.0
 variance: 1.0
 
 instance:
-  _target_: priorCVAE.priors.Matern32
+  _target_: priorCVAE.priors.Matern52
   lengthscale: ${kernel.lengthscale}
   variance: ${kernel.variance}

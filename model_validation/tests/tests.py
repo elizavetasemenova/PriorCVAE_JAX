@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from priorCVAE.diagnostics import frobenius_norm_of_diff, sample_covariance
-from priorCVAE.priors import SquaredExponential
+from priorCVAE.priors import Kernel, SquaredExponential
 from .utils import mean_bootstrap_interval
 
 
@@ -23,7 +23,7 @@ def bootstrap_mean_test(samples: jnp.ndarray, **kwargs) -> jnp.ndarray:
     return num_valid / samples.shape[1]
 
 
-def norm_of_kernel_diff(samples: jnp.ndarray, kernel: jnp.ndarray, grid: jnp.array, **kwargs) -> jnp.ndarray:
+def norm_of_kernel_diff(samples: jnp.ndarray, kernel: Kernel, grid: jnp.array, **kwargs) -> jnp.ndarray:
     """
     Calculate the norm of the difference of the empirical covariance matrix and the kernel covariance.
 
@@ -37,7 +37,7 @@ def norm_of_kernel_diff(samples: jnp.ndarray, kernel: jnp.ndarray, grid: jnp.arr
     return norm
 
 
-def bootstrap_covariance_test(samples, kernel: jnp.ndarray, grid: jnp.array, sample_size=4000, num_iterations=1000, **kwargs):
+def bootstrap_covariance_test(samples: jnp.ndarray, kernel: Kernel, grid: jnp.array, sample_size=4000, num_iterations=1000, **kwargs):
     """
     Test if the kernel matrix lies within the 5th and 95th quantiles of the bootstrap distribution of the sample covariance matrix.
 
@@ -65,16 +65,27 @@ def bootstrap_covariance_test(samples, kernel: jnp.ndarray, grid: jnp.array, sam
 
     in_range = (ci_lower <= K) & (K <= ci_upper)
     valid_idx = np.where(in_range)
+    
+    num_valid = valid_idx[0].shape[0]
+    total = in_range.shape[0]
 
-    return valid_idx[0].shape[0]/K.shape[0]
+    return num_valid/total
 
 
-def mmd_two_sample_test(samples, gp_samples, num_permutations=40, **kwargs):
+def mmd_two_sample_test(samples, target_samples, num_permutations=100, **kwargs):
+    """
+    Test if the two samples come from the same distribution using the MMD test.
+
+    :param samples: samples to be tested.
+    :param target_samples: samples from the target distribution.
+    :param num_permutations: number of permutations to use.
+    :return: True if the test passes.
+    """
     # Compute the observed test statistic.
-    observed_mmd = multi_kernel_mmd(samples, gp_samples)
+    observed_mmd = multi_kernel_mmd(samples, target_samples)
 
     # Pool the distributions.
-    pooled = np.concatenate([samples, gp_samples])
+    pooled = np.concatenate([samples, target_samples])
 
     # Generate permutations.
     mmd_permutations = []
@@ -90,7 +101,15 @@ def mmd_two_sample_test(samples, gp_samples, num_permutations=40, **kwargs):
     return not observed_mmd > threshold
 
 
-def mmd(X, Y, kernel): 
+def squared_mmd(X, Y, kernel): 
+    """
+    Implementation of Empirical Maximum Mean Discrepancy (MMD).
+    For details see lemma 6 of https://jmlr.csail.mit.edu/papers/volume13/gretton12a/gretton12a.pdf
+
+    :param X: first set of samples.
+    :param Y: second set of samples.
+    :param kernel: Kernel instance.
+    """
  
     X = jnp.array(X)
     Y = jnp.array(Y)
@@ -107,9 +126,15 @@ def mmd(X, Y, kernel):
     return mmd_squared
 
 
-def multi_kernel_mmd(X, Y):
-    kernels = [SquaredExponential(0.2), SquaredExponential(4.0), SquaredExponential(8.0)]
+def multi_kernel_mmd(X, Y, kernels=[SquaredExponential(0.2), SquaredExponential(4.0), SquaredExponential(8.0)]):
+    """
+    Compute the average MMD using multiple kernels.
+
+    :param X: first set of samples.
+    :param Y: second set of samples.
+    :param kernels: list of kernels.
+    """
     total = 0.0
     for kernel in kernels:
-        total += mmd(X, Y, kernel)
+        total += squared_mmd(X, Y, kernel)
     return total / len(kernels)
