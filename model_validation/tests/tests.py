@@ -72,7 +72,7 @@ def bootstrap_covariance_test(samples: jnp.ndarray, kernel: Kernel, grid: jnp.ar
     return num_valid/total
 
 
-def mmd_two_sample_test(samples, target_samples, num_permutations=100, **kwargs):
+def mmd_two_sample_test(samples, target_samples, num_permutations=1000, **kwargs):
     """
     Test if the two samples come from the same distribution using the MMD test.
 
