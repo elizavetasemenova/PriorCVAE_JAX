@@ -58,7 +58,7 @@ def run_experiment(cfg: DictConfig):
 
     # Trainer
     optimizer = instantiate(cfg.optimizer)
-    loss = instantiate(cfg.loss)(conditional=cfg.conditional, vae_var=cfg.vae_var)
+    loss = instantiate(cfg.loss)
 
     trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss)
     trainer.init_params(y_test[0], c=ls_test[0])

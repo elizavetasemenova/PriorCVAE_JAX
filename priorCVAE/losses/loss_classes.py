@@ -14,6 +14,7 @@ import flax.linen as nn
 
 from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, square_maximum_mean_discrepancy
 from priorCVAE.priors import Kernel
+from priorCVAE.utility import sq_euclidean_dist
 
 
 class Loss(ABC):
@@ -96,6 +97,11 @@ class MMDAndKL(Loss):
         _, y, ls = batch
         c = ls if self.conditional else None
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
+
+        # Set lengthscale of MMD as suggested in Gretton et al.
+        dist = jnp.sqrt(sq_euclidean_dist(y_hat, y_hat) + 1e-10 * jnp.eye(y_hat.shape[0]))
+        self.kernel.lengthscale = jnp.median(dist)
+
         sq_mmd_loss = square_maximum_mean_discrepancy(self.kernel, y, y_hat, efficient_grads=True)
         relu_sq_mmd_loss = nn.relu(sq_mmd_loss)
         kld_loss = kl_divergence(z_mu, z_logvar)

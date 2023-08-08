@@ -1,5 +1,5 @@
 defaults:
-  - prior: squared_exponential
+  - kernel@prior: squared_exponential
   - data_generator: gp_data_generator
   - model/encoder: mlp_encoder
   - model/decoder: mlp_decoder
@@ -7,6 +7,7 @@ defaults:
   - trainer: vae_trainer
   - optimizer: adam
   - loss: squared_sum_kl
+  - kernel@mmd: squared_exponential
 
 n_data: 80
 x0: 0

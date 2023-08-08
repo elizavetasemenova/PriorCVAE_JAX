@@ -1,2 +1,3 @@
 _target_: priorCVAE.losses.SquaredSumAndKL
-_partial_: True
+conditional: ${conditional}
+vae_var: ${vae_var}
