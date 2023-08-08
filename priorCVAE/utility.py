@@ -108,7 +108,7 @@ def load_model_params(ckpt_dir: str) -> FrozenDict:
     return restored_params
 
 
-def generate_decoder_samples(key: KeyArray, decoder_params: Dict, decoder: Decoder, num_samples: int, latent_dim: int):
+def generate_decoder_samples(key: KeyArray, decoder_params: Dict, decoder: Decoder, num_samples: int, latent_dim: int, c: jnp.ndarray = None):
     """
     Generate samples from the decoder.
     
@@ -117,11 +117,16 @@ def generate_decoder_samples(key: KeyArray, decoder_params: Dict, decoder: Decod
     :param decoder: decoder model.
     :param num_samples: number of samples to generate.
     :param latent_dim: dimension of the latent space.
+    :param c: a Jax ndarray used for cVAE of the shape, (N, C).
 
     :return: generated samples.
     """
     z = random.normal(key, (num_samples, latent_dim))
     z = jnp.array(z)
+
+    if c is not None:
+        z = jnp.concatenate([z, c], axis=-1)
+
     x = decode(decoder_params, decoder, z)
     return x
 
