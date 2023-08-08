@@ -4,6 +4,8 @@ Gaussian process dataset.
 """
 
 import random as rnd
+from typing import Union, List
+from omegaconf import ListConfig
 
 import jax.numpy as jnp
 from jax import random
@@ -21,7 +23,8 @@ class GPDataset:
     """
 
     def __init__(self, kernel: Kernel, n_data: int = 400, x_lim_low: int = 0,
-                 x_lim_high: int = 1, sample_lengthscale: bool = False, lengthscale_options: jnp.ndarray = None):
+                 x_lim_high: int = 1, sample_lengthscale: bool = False,
+                 lengthscale_options: Union[List, jnp.ndarray] = None):
         """
         Initialize the Gaussian Process dataset class.
 
@@ -30,6 +33,7 @@ class GPDataset:
         :param x_lim_low: lower limit of the interval.
         :param x_lim_high: upper limit if the interval.
         :param sample_lengthscale: whether to sample lengthscale for the kernel or not. Defaults to False.
+        :param lengthscale_options: a list or jnp.ndarray of lengthscale options to choose from.
         """
         self.n_data = n_data
         self.x_lim_low = x_lim_low
@@ -37,6 +41,8 @@ class GPDataset:
         self.sample_lengthscale = sample_lengthscale
         self.kernel = kernel
         self.x = jnp.linspace(self.x_lim_low, self.x_lim_high, self.n_data)
+        if isinstance(lengthscale_options, ListConfig):
+            lengthscale_options = jnp.array(lengthscale_options)
         self.lengthscale_options = lengthscale_options
 
     def simulatedata(self, n_samples: int = 10000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:

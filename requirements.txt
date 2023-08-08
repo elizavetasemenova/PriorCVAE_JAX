@@ -16,3 +16,4 @@ wandb==0.15.8
 omegaconf==2.3.0
 plotly==5.15.0
 tenacity==8.2.2
+scikit-learn==1.3.0

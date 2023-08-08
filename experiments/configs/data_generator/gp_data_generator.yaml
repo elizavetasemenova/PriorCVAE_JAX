@@ -1,3 +1,4 @@
 _target_: priorCVAE.datasets.GPDataset
 kernel: ${prior}
 _partial_: True
+lengthscale_options: ${discrete_ls}

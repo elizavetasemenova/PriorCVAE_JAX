@@ -20,7 +20,7 @@ def GP(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter: float = 1e
     :param noise: if True, add noise to the sample. The noise is drawn from the half-normal distribution with
                   variance of 0.1.
     :param sample_lengthscale: if True, sample lenthscale from a Uniform distribution, U(0.01, 0.99).
-    :param lengthscale_options: a list of lengthscale options to choose from.
+    :param lengthscale_options: a jnp.ndarray of lengthscale options to choose from.
     """
 
     if sample_lengthscale:
