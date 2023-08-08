@@ -2,16 +2,19 @@
 File contains utility functions used throughout the package
 """
 
-from typing import Sequence, Union, List
+from typing import Sequence, Union, List, Dict
 import random
-
 import orbax
 from flax.training import orbax_utils
 import jax.numpy as jnp
+from jax import random
+from jax.random import KeyArray
 from flax.core import FrozenDict
 import numpy as np
 import torch
 import torch.utils.data as data
+
+from priorCVAE.models import Decoder
 
 
 def numpy_collate(batch):
@@ -70,7 +73,7 @@ def sq_euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
 
     d(x, y) = sqrt(x**2 + y**2.T - 2 * <x, transpose(y)>)
 
-    The implementation uses the braodcasting functionality of jax.numpy for mulit-dimensionality calculation.
+    The implementation uses the broadcasting functionality of jax.numpy for mulit-dimensionality calculation.
 
     :param x: Jax ndarray of the shape, (N_1, D).
     :param y: Jax ndarray of the shape, (N_2, D).
@@ -103,3 +106,31 @@ def load_model_params(ckpt_dir: str) -> FrozenDict:
     orbax_checkpointer = orbax.checkpoint.PyTreeCheckpointer()
     restored_params = orbax_checkpointer.restore(ckpt_dir)['params']
     return restored_params
+
+
+def generate_decoder_samples(key: KeyArray, decoder_params: Dict, decoder: Decoder, num_samples: int, latent_dim: int, c: jnp.ndarray = None):
+    """
+    Generate samples from the decoder.
+    
+    :param key: Jax random key.
+    :param decoder_params: decoder parameters.
+    :param decoder: decoder model.
+    :param num_samples: number of samples to generate.
+    :param latent_dim: dimension of the latent space.
+    :param c: a Jax ndarray used for cVAE of the shape, (N, C).
+
+    :return: generated samples.
+    """
+    z = random.normal(key, (num_samples, latent_dim))
+    z = jnp.array(z)
+
+    if c is not None:
+        z = jnp.concatenate([z, c], axis=-1)
+
+    x = decode(decoder_params, decoder, z)
+    return x
+
+
+def decode(decoder_params: Dict, decoder: Decoder, z: jnp.ndarray):
+    """Decode a latent vector z."""
+    return decoder.apply({'params': decoder_params}, z)  
