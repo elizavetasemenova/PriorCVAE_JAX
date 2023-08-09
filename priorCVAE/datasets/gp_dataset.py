@@ -4,12 +4,12 @@ Gaussian process dataset.
 """
 
 import random as rnd
-
 import jax.numpy as jnp
 from jax import random
 from numpyro.infer import Predictive
 
 from priorCVAE.priors import GP, Kernel
+from priorCVAE.utility import create_grid
 
 
 class GPDataset:
@@ -21,7 +21,7 @@ class GPDataset:
     """
 
     def __init__(self, kernel: Kernel, n_data: int = 400, x_lim_low: int = 0,
-                 x_lim_high: int = 1, sample_lengthscale: bool = False):
+                 x_lim_high: int = 1, sample_lengthscale: bool = False, x_dim: int = 1):
         """
         Initialize the Gaussian Process dataset class.
 
@@ -30,13 +30,15 @@ class GPDataset:
         :param x_lim_low: lower limit of the interval.
         :param x_lim_high: upper limit if the interval.
         :param sample_lengthscale: whether to sample lengthscale for the kernel or not. Defaults to False.
+        :param x_dim: dimension of the grid x. Dimensions of one and two are supported.
         """
         self.n_data = n_data
         self.x_lim_low = x_lim_low
         self.x_lim_high = x_lim_high
         self.sample_lengthscale = sample_lengthscale
         self.kernel = kernel
-        self.x = jnp.linspace(self.x_lim_low, self.x_lim_high, self.n_data)
+        self.x = create_grid(self.n_data, self.x_lim_low, self.x_lim_high, x_dim)
+
 
     def simulatedata(self, n_samples: int = 10000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """
@@ -58,4 +60,4 @@ class GPDataset:
         ls_draws = jnp.array(all_draws['ls'])
         gp_draws = jnp.array(all_draws['y'])
 
-        return self.x.repeat(n_samples).reshape(self.x.shape[0], n_samples).transpose(), gp_draws, ls_draws
+        return self.x.flatten().repeat(n_samples).reshape(self.x.flatten().shape[0], n_samples).transpose(), gp_draws, ls_draws

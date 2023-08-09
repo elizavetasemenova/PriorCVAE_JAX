@@ -67,13 +67,14 @@ def create_data_loaders(*datasets: Sequence[data.Dataset], train: Union[bool, Se
     return loaders
 
 
-def sq_euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
+def sq_euclidean_dist(x: jnp.ndarray, y: jnp.ndarray, jitter: float = 1e-10) -> jnp.ndarray:
     """
     Calculate Squared Euclidean distance between the two vectors, x and y.
 
     d(x, y) = sqrt(x**2 + y**2.T - 2 * <x, transpose(y)>)
 
     The implementation uses the broadcasting functionality of jax.numpy for mulit-dimensionality calculation.
+    A small jitter is added to eliminate negative values caused by numerical instability.
 
     :param x: Jax ndarray of the shape, (N_1, D).
     :param y: Jax ndarray of the shape, (N_2, D).
@@ -90,6 +91,7 @@ def sq_euclidean_dist(x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
 
     dist = jnp.sum(jnp.square(x), axis=-1)[..., None] + jnp.sum(jnp.square(y), axis=-1)[..., None].T - 2 * jnp.dot(x,
                                                                                                                    y.T)
+    dist += jitter
     return dist
 
 
@@ -134,3 +136,26 @@ def generate_decoder_samples(key: KeyArray, decoder_params: Dict, decoder: Decod
 def decode(decoder_params: Dict, decoder: Decoder, z: jnp.ndarray):
     """Decode a latent vector z."""
     return decoder.apply({'params': decoder_params}, z)  
+
+
+def create_grid(n_data: int, x_lim_low: int = 0, x_lim_high: int = 1, x_dim: int = 1) -> jnp.ndarray:
+    """
+    Creates an array of grid points in one or two dimensions in the correct format for input to a kernel.
+    :param n_data: Number of points along one dimension of the grid.
+    :param x_lim_low: Lower limit of the grid.
+    :param x_lim_high: Upper limit of the grid.
+    :param x_dim: Dimension of the grid.
+    :returns: array of shape (n_data ** x_dim, x_dim).
+    """
+    if x_dim not in (1, 2):
+        raise ValueError(f"Dimensions must be 1 or 2, got {x_dim}")
+
+    x = jnp.linspace(x_lim_low, x_lim_high, n_data)
+
+    if x_dim == 2:
+        x1, x2 = jnp.meshgrid(x, x)
+        x = jnp.stack([x1, x2], axis=-1)
+
+    x = x.reshape([n_data ** x_dim, x_dim])
+
+    return x
