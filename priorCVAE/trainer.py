@@ -128,3 +128,58 @@ class VAETrainer:
         t_elapsed = time.time() - t_start
 
         return loss_train, loss_test, t_elapsed
+
+    def train_sequentially(self, data_generator, test_set: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
+                             num_epochs: int = 10, batch_size: int = 100, debug: bool = True,
+                             key: KeyArray = None) -> [List, List, float]:
+        """
+        Train the model.
+
+        :param data_generator: A data generator that simulates and give a new batch of data.
+        :param test_set: Test set of the data. It is list of [x, y, c] values.
+        :param num_epochs: Number of epochs to be performed.
+        :param batch_size: Batch-size of the data at each iteration.
+        :param debug: A boolean variable to indicate whether to print debug messages or not.
+        :param key: Jax PRNGKey to ensure reproducibility. If none, it is set randomly.
+
+        :returns: a list of three values, train_loss, test_loss, time_taken.
+        """
+        if self.state is None:
+            raise Exception("Initialize the model parameters before training!!!")
+
+        loss_train = []
+        loss_test = []
+        t_start = time.time()
+
+        if key is None:
+            key = jax.random.PRNGKey(random.randint(0, 9999))
+        z_key, test_key = jax.random.split(key, 2)
+
+        assert data_generator.dataset.shape[0] % batch_size == 0
+        total_batches = int(data_generator.dataset.shape[0] // batch_size)
+
+        for e in range(num_epochs):
+            for n_batch in range(total_batches):
+                # Generate new batch
+                batch_start_idx = n_batch * batch_size
+                batch_idx = jnp.linspace(batch_start_idx, batch_start_idx + batch_size - 1, batch_size, dtype=jnp.int64)
+
+                batch_train = data_generator.simulatedata(batch_idx=batch_idx)
+                z_key, key = jax.random.split(z_key)
+                self.state, loss_train_value = self.train_step(self.state, batch_train, key)
+                loss_train.append(loss_train_value)
+
+                # Test
+                test_key, key = jax.random.split(test_key)
+                loss_test_value = self.eval_step(self.state, test_set, test_key)
+                loss_test.append(loss_test_value)
+
+            if debug:
+                log.info(f' Epoch [{e + 1:5d}] training loss: {loss_train[-1]:.3f}, test loss: {loss_test[-1]:.3f}')
+                if wandb.run:
+                    wandb.log({"Train Loss": loss_train[-1]}, step=e)
+                    wandb.log({"Test Loss": loss_test[-1]}, step=e)
+
+        t_elapsed = time.time() - t_start
+
+        return loss_train, loss_test, t_elapsed

@@ -1,0 +1,32 @@
+defaults:
+  - kernel@prior: squared_exponential
+  - data_generator: offline_data_generator
+  - model/encoder: mlp_encoder
+  - model/decoder: mlp_decoder
+  - model/vae: vae
+  - trainer: vae_trainer
+  - optimizer: adam
+  - loss: squared_sum_kl
+  - kernel@mmd: squared_exponential
+
+n_data: 80
+x0: 0
+x1: 1
+sample_lengthscale: True
+
+hidden_dim: 60
+latent_dim: 40
+
+n_samples: 100000
+lr: 1e-3
+batch_size: 1000
+num_epochs: 400
+conditional: True
+vae_var: 1.0
+debug: True
+
+plot_ls: 0.05
+
+wandb:
+  username: null
+  project: "PriorCVAE"

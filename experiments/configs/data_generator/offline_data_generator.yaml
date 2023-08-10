@@ -1,0 +1,2 @@
+_target_: priorCVAE.datasets.OfflineDataset
+_partial_: True
