@@ -79,7 +79,7 @@ def run_experiment(cfg: DictConfig):
     log.info(f"---------------------------------------------")
 
     trained_decoder_params = trainer.state.params["decoder"]
-    plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=cfg.plot_ls, batch_size=cfg.batch_size,
+    plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=cfg.plot_ls,
                          latent_dim=cfg.latent_dim, x_val=x_test[0], n=15, output_dir=output_dir)
 
     if wandb.run:
