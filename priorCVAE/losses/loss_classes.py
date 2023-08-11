@@ -118,7 +118,7 @@ class NLLAndKL(Loss):
         """
         super().__init__(conditional)
         self.nll_scale = 1
-        self.kl_scale = 0
+        self.kl_scale = 0.5
         self.itr = 0
 
     def step_increase_parameter(self):
