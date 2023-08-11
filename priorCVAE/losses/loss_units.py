@@ -108,3 +108,30 @@ def square_maximum_mean_discrepancy(kernel: Kernel, target_samples: jnp.ndarray,
 
     mmd_val_square = term_xx + term_yy - term_xy
     return mmd_val_square
+
+
+@jax.jit
+def Gaussian_NLL(y: jnp.ndarray, reconstructed_y_m: jnp.ndarray, reconstructed_y_logvar: jnp.ndarray) -> jnp.ndarray:
+    """
+    Gaussian negative log-likelihood i.e.
+
+    L(y, y') = -1 * N(y | y'_m, y'_S)
+
+    :param y: the ground-truth value of y with shape (N, D).
+    :param reconstructed_y_m: the mean of the reconstructed value of y with shape (N, D).
+    :param reconstructed_y_logvar: the log variance of the reconstructed value of y with shape (N, D).
+
+    :returns: the loss value
+
+    Note: We do not calculate the constant term here.
+    """
+    assert y.shape == reconstructed_y_m.shape == reconstructed_y_logvar.shape
+
+    determinant_term = jnp.sum(reconstructed_y_logvar, axis=-1)
+    S_inv = 1 / jnp.exp(reconstructed_y_logvar)
+    diff_term = (y - reconstructed_y_m) * S_inv * (y - reconstructed_y_m)
+    diff_term = jnp.sum(diff_term, axis=-1)
+
+    assert determinant_term.shape == diff_term.shape == (y.shape[0], )
+    nll_val = -0.5 * (determinant_term + diff_term)
+    return -1 * jnp.sum(nll_val)

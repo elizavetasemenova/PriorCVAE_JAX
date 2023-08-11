@@ -12,9 +12,8 @@ from flax.training.train_state import TrainState
 from flax.core import FrozenDict
 import flax.linen as nn
 
-from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, square_maximum_mean_discrepancy
+from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, square_maximum_mean_discrepancy, Gaussian_NLL
 from priorCVAE.priors import Kernel
-from priorCVAE.utility import sq_euclidean_dist
 
 
 class Loss(ABC):
@@ -98,12 +97,56 @@ class MMDAndKL(Loss):
         c = ls if self.conditional else None
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
 
-        # Set lengthscale of MMD as suggested in Gretton et al.
-        dist = jnp.sqrt(sq_euclidean_dist(y_hat, y_hat) + 1e-10 * jnp.eye(y_hat.shape[0]))
-        self.kernel.lengthscale = jnp.median(dist)
-
         sq_mmd_loss = square_maximum_mean_discrepancy(self.kernel, y, y_hat, efficient_grads=True)
-        relu_sq_mmd_loss = nn.relu(sq_mmd_loss)
+        relu_sq_mmd_loss = nn.relu(sq_mmd_loss)  # Applying ReLU for avoiding negative MMD values
         kld_loss = kl_divergence(z_mu, z_logvar)
         loss = jnp.sqrt(relu_sq_mmd_loss) + self.kl_scaling * kld_loss
+        return loss
+
+
+class NLLAndKL(Loss):
+    """
+    Loss function to be used when Decoder has two heads for mean and logvar.
+
+    Note: This function only works with TwoHeadDecoder model.
+    """
+    def __init__(self, conditional: bool = False):
+        """
+        Initialize the NLLAndKL loss.
+
+        :param conditional: variable to show whether conditional VAE to use or not.
+        """
+        super().__init__(conditional)
+        self.nll_scale = 1
+        self.kl_scale = 0
+        self.itr = 0
+
+    def step_increase_parameter(self):
+        """
+        Using predefined steps
+        After every 1000 iterations add 0.1
+        """
+        if int(self.itr % 100) == 0:
+            self.kl_scale = self.kl_scale + 0.1
+
+    def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
+                 z_rng: KeyArray):
+        """
+        Calculates the loss value.
+
+        :param state_params: Current state parameters of the model.
+        :param state: Current state of the model.
+        :param batch: Current batch of the data. It is a list of [x, y, c] values.
+        :param z_rng: a PRNG key used as the random key.
+        """
+        _, y, ls = batch
+        c = ls if self.conditional else None
+        y_hat_mu, y_hat_logvar, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
+        nll_loss = self.nll_scale * Gaussian_NLL(y, y_hat_mu, y_hat_logvar)
+        kld_loss = self.kl_scale * kl_divergence(z_mu, z_logvar)
+        loss = nll_loss + kld_loss
+
+        self.itr = self.itr + 1
+        self.step_increase_parameter()
+
         return loss

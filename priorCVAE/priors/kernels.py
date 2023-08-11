@@ -129,3 +129,41 @@ class Matern52(Kernel):
         k = self.variance * (1.0 + sqrt5 * dist + 5.0 / 3.0 * jnp.square(dist)) * jnp.exp(-sqrt5 * dist)
         assert k.shape == (x1.shape[0], x2.shape[0])
         return k
+
+
+class RationalQuadratic(Kernel):
+    """
+    Rational Quadratic kernel,
+
+    k(r) = σ² (1 + d² / 2αℓ²)^(-α)
+
+    σ² : variance
+    ℓ  : lengthscales
+    α  : alpha, determines relative weighting of small-scale and large-scale fluctuations
+
+    For α → ∞, the RQ kernel becomes equivalent to the squared exponential.
+    """
+    def __init__(self, lengthscale: float = 1.0, variance: float = 1.0, alpha: float = 1.0):
+        super().__init__(lengthscale, variance)
+        self.alpha = alpha
+
+    def __call__(self, x1: jnp.ndarray, x2: jnp.ndarray) -> jnp.ndarray:
+        """
+        Calculates the kernel value for x1 and x2.
+
+        :param x1: Jax ndarray of the shape `(N1, D)`.
+        :param x2: Jax ndarray of the shape `(N2, D)`.
+
+        :return: kernel matrix of the shape `(N1, N2)`.
+
+        """
+        x1 = self._handle_input_shape(x1)
+        x2 = self._handle_input_shape(x2)
+        assert x1.shape[-1] == x2.shape[-1]
+        x1 = self._scale_by_lengthscale(x1)
+        x2 = self._scale_by_lengthscale(x2)
+        d2_scaled = sq_euclidean_dist(x1, x2)
+
+        k = self.variance * (1 + 0.5 * d2_scaled / self.alpha) ** (-self.alpha)
+        assert k.shape == (x1.shape[0], x2.shape[0])
+        return k

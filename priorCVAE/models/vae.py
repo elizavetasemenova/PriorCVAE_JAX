@@ -9,7 +9,7 @@ import jax.numpy as jnp
 from flax import linen as nn
 
 from priorCVAE.models.encoder import Encoder
-from priorCVAE.models.decoder import Decoder
+from priorCVAE.models.decoder import Decoder, MLPDecoderTwoHeads
 
 
 class VAE(nn.Module):
@@ -46,6 +46,9 @@ class VAE(nn.Module):
         if c is not None:
             z = jnp.concatenate([z, c], axis=-1)
 
-        y_hat = self.decoder(z)
-
-        return y_hat, z_mu, z_logvar
+        if isinstance(self.decoder, MLPDecoderTwoHeads):
+            y_hat_m, y_hat_logvar = self.decoder(z)
+            return y_hat_m, y_hat_logvar, z_mu, z_logvar
+        else:
+            y_hat = self.decoder(z)
+            return y_hat, z_mu, z_logvar

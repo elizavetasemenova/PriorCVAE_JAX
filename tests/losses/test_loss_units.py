@@ -6,7 +6,7 @@ import jax
 import numpy as np
 import jax.numpy as jnp
 
-from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, mean_squared_loss, square_maximum_mean_discrepancy
+from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, mean_squared_loss, square_maximum_mean_discrepancy, Gaussian_NLL
 from priorCVAE.priors import SquaredExponential
 
 
@@ -101,3 +101,24 @@ def test_square_maximum_mean_discrepancy(num_data, dimension, boolean_variable):
 
     np.testing.assert_array_almost_equal(sq_mmd_val_grads, expected_val_grads, decimal=6)
     np.testing.assert_array_almost_equal(sq_mmd_val_full, expected_val_full, decimal=6)
+
+
+def test_nll_loss(num_data, dimension):
+    """Test Gaussian NLL loss"""
+    key = jax.random.PRNGKey(random.randint(a=0, b=999))
+    y = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.1, maxval=4.)
+    key, _ = jax.random.split(key)
+    y_reconstruction_m = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.1, maxval=4.)
+    y_reconstruction_diag_S = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.1, maxval=1.)
+    y_reconstruction_logvar = jnp.log(y_reconstruction_diag_S)
+
+    y_reconstruction_S = jnp.expand_dims(y_reconstruction_diag_S, axis=1) * jnp.eye(dimension)
+
+    nll_val = Gaussian_NLL(y, y_reconstruction_m, y_reconstruction_logvar)
+
+    true_logpdf = jax.scipy.stats.multivariate_normal.logpdf(y, y_reconstruction_m, y_reconstruction_S)
+    constant_val = -y.shape[-1]/2 * jnp.log(2 * jnp.pi)
+    expected_val = -1 * (true_logpdf - constant_val)
+    expected_val = jnp.sum(expected_val)
+
+    np.testing.assert_array_almost_equal(nll_val, expected_val, decimal=6)

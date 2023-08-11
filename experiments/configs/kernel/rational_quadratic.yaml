@@ -1,0 +1,4 @@
+_target_: priorCVAE.priors.RationalQuadratic
+lengthscale: 1.
+variance: 1.
+alpha: 1.

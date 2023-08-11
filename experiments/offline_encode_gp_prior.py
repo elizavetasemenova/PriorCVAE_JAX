@@ -35,7 +35,7 @@ def run_experiment(cfg: DictConfig):
     # Generate offline samples
     prior_kernel = instantiate(cfg.prior)
     offline_gp_dataset = GPDataset(prior_kernel, n_data=cfg.n_data, x_lim_low=cfg.x0, x_lim_high=cfg.x1,
-                                   sample_lengthscale=cfg.sample_lengthscale, lengthscale_options=jnp.array([0.05, 0.1]))
+                                   sample_lengthscale=cfg.sample_lengthscale)
     offline_x, offline_data, offline_ls = offline_gp_dataset.simulatedata(cfg.n_samples)
 
     # Data generator
@@ -85,7 +85,7 @@ def run_experiment(cfg: DictConfig):
     log.info(f"---------------------------------------------")
 
     trained_decoder_params = trainer.state.params["decoder"]
-    plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=cfg.plot_ls, batch_size=cfg.batch_size,
+    plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=cfg.plot_ls,
                          latent_dim=cfg.latent_dim, x_val=x_test[0], n=15, output_dir=output_dir)
 
     if wandb.run:
