@@ -82,7 +82,8 @@ def run_experiment(cfg: DictConfig):
 
     trained_decoder_params = trainer.state.params["decoder"]
     plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=cfg.plot_ls,
-                         latent_dim=cfg.latent_dim, x_val=x_test[0], n=15, output_dir=output_dir)
+                         latent_dim=cfg.latent_dim, x_val=x_test[0], n=15, output_dir=output_dir,
+                         conditional=cfg.conditional)
 
     if wandb.run:
         output_dir = move_wandb_hydra_files(output_dir)  # Move files to a different folder with wandb run id

@@ -58,12 +58,13 @@ def plot_lengthscales(train_lengthscale, test_lengthscale, output_dir: str = "")
     plt.show()
 
 
-def plot_decoder_samples(decoder, decoder_params, ls, latent_dim, x_val, n: int = 15, output_dir: str = ""):
+def plot_decoder_samples(decoder, decoder_params, ls, latent_dim, x_val, n: int = 15, output_dir: str = "",
+                         conditional: bool = True):
     key = jax.random.PRNGKey(random.randint(0, 9999))
     rng, z_rng, init_rng = jax.random.split(key, 3)
     z = jax.random.normal(z_rng, (n, latent_dim))
 
-    c = ls * jnp.ones((z.shape[0], 1))
+    c = ls * jnp.ones((z.shape[0], 1)) if conditional else None
     z_c = jnp.concatenate([z, c], axis=-1)
 
     if isinstance(decoder, MLPDecoderTwoHeads):
