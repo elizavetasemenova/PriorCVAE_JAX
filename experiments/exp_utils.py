@@ -64,15 +64,16 @@ def plot_decoder_samples(decoder, decoder_params, ls, latent_dim, x_val, n: int 
     rng, z_rng, init_rng = jax.random.split(key, 3)
     z = jax.random.normal(z_rng, (n, latent_dim))
 
-    c = ls * jnp.ones((z.shape[0], 1)) if conditional else None
-    z_c = jnp.concatenate([z, c], axis=-1)
+    if conditional:
+        c = ls * jnp.ones((z.shape[0], 1))
+        z = jnp.concatenate([z, c], axis=-1)
 
     if isinstance(decoder, MLPDecoderTwoHeads):
-        m, log_S = decoder.apply({'params': decoder_params}, z_c)
+        m, log_S = decoder.apply({'params': decoder_params}, z)
         S = jnp.exp(log_S)
         out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
     else:
-        out = decoder.apply({'params': decoder_params}, z_c)
+        out = decoder.apply({'params': decoder_params}, z)
 
     fig, ax = plt.subplots(figsize=(4, 3))
     for i in range(n):
