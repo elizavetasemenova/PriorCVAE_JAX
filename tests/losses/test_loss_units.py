@@ -13,13 +13,15 @@ from priorCVAE.priors import SquaredExponential
 def test_kl_divergence(dimension):
     """Test KL divergence between a Gaussian N(m, S) and a unit Gaussian N(0, I)"""
     key = jax.random.PRNGKey(random.randint(a=0, b=999))
-    m = jax.random.uniform(key=key, shape=(dimension, ), minval=0.1, maxval=4.)
-    log_S = jax.random.uniform(key=key, shape=(dimension,), minval=0.1, maxval=.9)
+    B = 2
+    m = jax.random.uniform(key=key, shape=(B, dimension), minval=0.1, maxval=4.)
+    log_S = jax.random.uniform(key=key, shape=(B, dimension), minval=0.1, maxval=.9)
 
     kl_value = kl_divergence(m, log_S)
 
     expected_kl_value = -0.5 * (1 + log_S - jnp.exp(log_S) - jnp.square(m))
-    expected_kl_value = jnp.sum(expected_kl_value)
+    expected_kl_value = jnp.sum(expected_kl_value, axis=-1)
+    expected_kl_value = jnp.mean(expected_kl_value, axis=0)
 
     np.testing.assert_array_almost_equal(kl_value, expected_kl_value, decimal=6)
 
@@ -33,7 +35,7 @@ def test_scaled_sum_squared_loss(num_data, dimension):
     vae_variance = jax.random.normal(key=key).item()
 
     vae_loss_val = scaled_sum_squared_loss(y, y_reconstruction, vae_variance)
-    expected_val = jnp.sum(0.5 * (y - y_reconstruction)**2/vae_variance)
+    expected_val = jnp.mean(jnp.sum(0.5 * (y - y_reconstruction)**2/vae_variance, axis=-1), axis=0)
 
     np.testing.assert_array_almost_equal(vae_loss_val, expected_val, decimal=6)
 
@@ -119,6 +121,6 @@ def test_nll_loss(num_data, dimension):
     true_logpdf = jax.scipy.stats.multivariate_normal.logpdf(y, y_reconstruction_m, y_reconstruction_S)
     constant_val = -y.shape[-1]/2 * jnp.log(2 * jnp.pi)
     expected_val = -1 * (true_logpdf - constant_val)
-    expected_val = jnp.sum(expected_val)
+    expected_val = jnp.mean(expected_val)
 
     np.testing.assert_array_almost_equal(nll_val, expected_val, decimal=6)

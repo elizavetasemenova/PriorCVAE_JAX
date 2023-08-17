@@ -72,7 +72,7 @@ def mean_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarr
     """
     assert len(y.shape) == len(reconstructed_y.shape) == 2
     assert y.shape == reconstructed_y.shape
-    return jnp.mean((reconstructed_y - y) ** 2, axis=-1)
+    return jnp.mean((reconstructed_y - y) ** 2)
 
 
 @partial(jax.jit, static_argnames=['kernel', 'efficient_grads', 'biased'])
@@ -140,10 +140,10 @@ def Gaussian_NLL(y: jnp.ndarray, reconstructed_y_m: jnp.ndarray, reconstructed_y
     assert len(y.shape) == 2
 
     determinant_term = jnp.sum(reconstructed_y_logvar, axis=-1)
-    S_inv = 1 / jnp.exp(reconstructed_y_logvar)
+    S_inv = 1 / jnp.exp(reconstructed_y_logvar)  # As S is diagonal
     diff_term = (y - reconstructed_y_m) * S_inv * (y - reconstructed_y_m)
     diff_term = jnp.sum(diff_term, axis=-1)
 
     assert determinant_term.shape == diff_term.shape == (y.shape[0], )
     nll_val = -0.5 * (determinant_term + diff_term)
-    return -1 * jnp.mean(nll_val)
+    return -1 * jnp.mean(nll_val, axis=0)

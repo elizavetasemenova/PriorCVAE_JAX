@@ -2,6 +2,7 @@
 Test the MLPEncoder, MLPDecoder, VAE models.
 """
 import pytest
+from typing import List
 
 import jax
 import jax.numpy as jnp
@@ -65,7 +66,14 @@ def test_decoder_model_shape(num_data, data_dimension, hidden_dimension, latent_
 def test_vae_model_shape(num_data, data_dimension, hidden_dimension, latent_dimension):
     """Test the shape of the outputs of VAE model"""
     encoder = MLPEncoder(hidden_dim=hidden_dimension, latent_dim=latent_dimension)
-    decoder = MLPDecoder(hidden_dim=hidden_dimension, out_dim=data_dimension)
+
+    if isinstance(hidden_dimension, List):
+        decoder_hidden_dim = hidden_dimension.copy()
+        decoder_hidden_dim.reverse()
+    else:
+        decoder_hidden_dim = hidden_dimension
+
+    decoder = MLPDecoder(hidden_dim=decoder_hidden_dim, out_dim=data_dimension)
 
     vae = VAE(encoder=encoder, decoder=decoder)
     x = jnp.zeros((num_data, data_dimension))
@@ -83,7 +91,13 @@ def test_vae_model_shape(num_data, data_dimension, hidden_dimension, latent_dime
 def test_vae_reparameterize(num_data, data_dimension, hidden_dimension, latent_dimension):
     """Test the reparameterization of the VAE."""
     encoder = MLPEncoder(hidden_dim=hidden_dimension, latent_dim=latent_dimension)
-    decoder = MLPDecoder(hidden_dim=hidden_dimension, out_dim=data_dimension)
+
+    if isinstance(hidden_dimension, List):
+        decoder_hidden_dim = hidden_dimension.copy()
+        decoder_hidden_dim.reverse()
+    else:
+        decoder_hidden_dim = hidden_dimension
+    decoder = MLPDecoder(hidden_dim=decoder_hidden_dim, out_dim=data_dimension)
 
     vae = VAE(encoder=encoder, decoder=decoder)
     x = jnp.zeros((num_data, data_dimension))
@@ -109,7 +123,20 @@ def test_dense_vae_structure(hidden_dim_activations, latent_dimension, data_dime
     """
     hidden_dimension, activation_fn = hidden_dim_activations
     encoder = MLPEncoder(hidden_dim=hidden_dimension, latent_dim=latent_dimension, activations=activation_fn)
-    decoder = MLPDecoder(hidden_dim=hidden_dimension, out_dim=data_dimension, activations=activation_fn)
+
+    if isinstance(hidden_dimension, List):
+        decoder_hidden_dim = hidden_dimension.copy()
+        decoder_hidden_dim.reverse()
+    else:
+        decoder_hidden_dim = hidden_dimension
+
+    if isinstance(activation_fn, List):
+        decoder_activation_fn = activation_fn.copy()
+        decoder_activation_fn.reverse()
+    else:
+        decoder_activation_fn = activation_fn
+
+    decoder = MLPDecoder(hidden_dim=decoder_hidden_dim, out_dim=data_dimension, activations=decoder_activation_fn)
 
     vae = VAE(encoder=encoder, decoder=decoder)
     x = jnp.zeros((num_data, data_dimension))
