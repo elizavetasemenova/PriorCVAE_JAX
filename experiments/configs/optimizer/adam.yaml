@@ -1,2 +1,3 @@
+defaults:
+  - scheduler@learning_rate: exponential_decay
 _target_: optax.adam
-learning_rate: ${lr}

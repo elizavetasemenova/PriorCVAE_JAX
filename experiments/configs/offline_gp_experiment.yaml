@@ -18,7 +18,6 @@ hidden_dim: 60
 latent_dim: 40
 
 n_samples: 100000
-lr: 1e-3
 batch_size: 1000
 num_epochs: 400
 conditional: True
