@@ -60,7 +60,7 @@ def plot_lengthscales(train_lengthscale, test_lengthscale, output_dir: str = "")
 
 
 def plot_decoder_samples(decoder, decoder_params, ls, latent_dim, x_val, n: int = 15, output_dir: str = "",
-                         conditional: bool = True):
+                         conditional: bool = True, plot_mean: bool = True):
     key = jax.random.PRNGKey(random.randint(0, 9999))
     rng, z_rng, init_rng = jax.random.split(key, 3)
     z = jax.random.normal(z_rng, (n, latent_dim))
@@ -72,9 +72,14 @@ def plot_decoder_samples(decoder, decoder_params, ls, latent_dim, x_val, n: int 
     if isinstance(decoder, MLPDecoderTwoHeads):
         m, log_S = decoder.apply({'params': decoder_params}, z)
         S = jnp.exp(log_S)
-        out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
     else:
-        out = decoder.apply({'params': decoder_params}, z)
+        m = decoder.apply({'params': decoder_params}, z)
+        S = 1
+
+    if plot_mean:
+        out = m
+    else:
+        out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
 
     fig, ax = plt.subplots(figsize=(4, 3))
     for i in range(n):
