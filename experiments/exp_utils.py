@@ -39,6 +39,7 @@ def plot_gp_samples(x, y, lengthscale, n: int = 15, output_dir: str = ""):
     if wandb.run:
         wandb.log({"GP_Samples": wandb.Image(plt)})
 
+    plt.ylim([-2.5, 2.5])
     plt.show()
 
 
@@ -88,6 +89,7 @@ def plot_decoder_samples(decoder, decoder_params, ls, latent_dim, x_val, n: int 
     if wandb.run:
         wandb.log({"Decoder Samples": wandb.Image(plt)})
 
+    plt.ylim([-2.5, 2.5])
     plt.show()
 
 

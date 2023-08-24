@@ -51,7 +51,8 @@ class MLPDecoderTwoHeads(Decoder):
     for _ in hidden_dims:
         z = Activation(Dense(z))
     y_m = Dense(z)
-    y_logstd = Dense(z)
+    y_logvar = Dense(1)
+    y_logvar is clipped between [-2, 4] and reshaped to be the correct shape as y_m.
 
     Note: For the same activation functions for all hidden layers, pass a single function rather than a list.
 
@@ -73,7 +74,7 @@ class MLPDecoderTwoHeads(Decoder):
 
         y_m = nn.Dense(self.out_dim, name="dec_mean")(z)
         y_logvar = nn.Dense(1, name="dec_logvar")(z)  # Shared
-        y_logvar = jnp.clip(y_logvar, -2, 1)
+        y_logvar = jnp.clip(y_logvar, -2, 4)
 
         y_logvar = y_logvar * jnp.ones_like(y_m)
 
