@@ -81,6 +81,6 @@ def pixel_sum_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarray:
     pixel_diff = jnp.abs(y - reconstructed_y)  # (N, D, D, C)
     sum_pixel_diff = jnp.sum(pixel_diff.reshape((N, -1)), axis=-1)  # (N, 1)
     assert sum_pixel_diff.shape == (N, )
-    mean_loss_val = jnp.mean(sum_pixel_diff)
+    mean_loss_val = jnp.mean(sum_pixel_diff, axis=0)
 
     return mean_loss_val
