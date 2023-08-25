@@ -9,7 +9,8 @@ from priorCVAE.models import MLPDecoder
 
 def true_sq_euclidean_distance(x1, x2):
     """Square Euclidean distance calculated as x1^2 + x2^2 - 2 * x1 * x2"""
-    dist = jnp.sum(jnp.square(x1), axis=-1)[..., None] + jnp.sum(jnp.square(x2), axis=-1)[..., None].T - 2 * jnp.dot(x1, x2.T)
+    dist = jnp.sum(jnp.square(x1), axis=-1)[..., None] + jnp.sum(jnp.square(x2), axis=-1)[..., None].T - 2 * jnp.dot(x1,
+                                                                                                                     x2.T)
     return dist
 
 
@@ -57,14 +58,14 @@ def test_generate_decoder_samples_conditional(num_data):
 
 def test_create_grid_1d(num_data):
     grid = create_grid(num_data)
-    assert grid.shape == (num_data,1)
+    assert grid.shape == (num_data, 1)
 
 
 def test_create_grid_2d(num_data):
-    grid = create_grid(num_data, x_dim=2)
+    grid = create_grid(num_data, dim=2)
     assert grid.shape == (num_data ** 2, 2)
 
 
 def test_create_grid_invalid_dimensions():
     with pytest.raises(ValueError, match=r"Dimensions must be 1 or 2, got 3"):
-        create_grid(100, x_dim=3)
+        create_grid(100, dim=3)
