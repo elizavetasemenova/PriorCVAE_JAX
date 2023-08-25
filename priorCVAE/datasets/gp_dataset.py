@@ -14,34 +14,21 @@ from priorCVAE.utility import create_grid
 
 class GPDataset:
     """
-    Generate GP draws over the regular grid in the interval (x_lim_low, x_lim_high) with n_dataPoints points.
-
-    Note: Currently the data is only generated with dimension as 1.
+    Generate GP draws over x.
 
     """
 
-    def __init__(self, kernel: Kernel, n_data: int = 400, x_lim_low: int = 0,
-                 x_lim_high: int = 1, sample_lengthscale: bool = False, x_dim: int = 1, flatten_draws: bool = False):
+    def __init__(self, kernel: Kernel, x: jnp.ndarray, sample_lengthscale: bool = False):
         """
         Initialize the Gaussian Process dataset class.
 
         :param kernel: Kernel to be used.
-        :param n_data: number of data points in the interval.
-        :param x_lim_low: lower limit of the interval.
-        :param x_lim_high: upper limit if the interval.
         :param sample_lengthscale: whether to sample lengthscale for the kernel or not. Defaults to False.
-        :param x_dim: dimension of the grid x. Dimensions of one and two are supported.
-        :param flatten_draws: If True, GP draws will be one-dimensional arrays. If False, dimensions are determined by x_dim.
+        :param x: jax.numpy.ndarray of the x grid used to generate sample from the GP.
         """
-        self.n_data = n_data
-        self.x_lim_low = x_lim_low
-        self.x_lim_high = x_lim_high
         self.sample_lengthscale = sample_lengthscale
         self.kernel = kernel
-        self.x = create_grid(self.n_data, self.x_lim_low, self.x_lim_high, x_dim)
-        self.x_dim = x_dim
-        self.flatten_draws = flatten_draws
-
+        self.x = x
 
     def simulatedata(self, n_samples: int = 10000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """
@@ -62,8 +49,5 @@ class GPDataset:
 
         ls_draws = jnp.array(all_draws['ls'])
         gp_draws = jnp.array(all_draws['y'])
-
-        if not self.flatten_draws and self.x_dim == 2:
-            gp_draws = gp_draws.reshape(n_samples, self.n_data, self.n_data)
 
         return self.x[None, ...].repeat(n_samples, axis=0), gp_draws, ls_draws
