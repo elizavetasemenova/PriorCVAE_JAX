@@ -148,7 +148,7 @@ def create_grid(n_data: int, lim_low: int = 0, lim_high: int = 1, dim: int = 1) 
     :param lim_high: Upper limit of the grid.
     :param dim: Dimension of the grid.
 
-    :returns: array of shape (n_data, x_dim, x_dim).
+    :returns: array of shape (n_data ** x_dim, x_dim).
     """
     if dim not in (1, 2):
         raise ValueError(f"Dimensions must be 1 or 2, got {dim}")
@@ -159,6 +159,6 @@ def create_grid(n_data: int, lim_low: int = 0, lim_high: int = 1, dim: int = 1) 
         x1, x2 = jnp.meshgrid(x, x)
         x = jnp.stack([x1, x2], axis=-1)
 
-    x = x.reshape([n_data, dim, dim])
+    x = x.reshape([n_data ** dim, dim])
 
     return x
