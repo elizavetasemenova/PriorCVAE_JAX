@@ -133,4 +133,4 @@ def generate_decoder_samples(key: KeyArray, decoder_params: Dict, decoder: Decod
 
 def decode(decoder_params: Dict, decoder: Decoder, z: jnp.ndarray):
     """Decode a latent vector z."""
-    return decoder.apply({'params': decoder_params}, z)
+    return decoder.apply({'params': decoder_params}, z)  

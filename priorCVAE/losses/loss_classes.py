@@ -12,7 +12,7 @@ from flax.training.train_state import TrainState
 from flax.core import FrozenDict
 import flax.linen as nn
 
-from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, square_maximum_mean_discrepancy, pixel_sum_loss
+from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, square_maximum_mean_discrepancy
 from priorCVAE.priors import Kernel
 
 
@@ -100,49 +100,4 @@ class MMDAndKL(Loss):
         relu_sq_mmd_loss = nn.relu(sq_mmd_loss)
         kld_loss = kl_divergence(z_mu, z_logvar)
         loss = jnp.sqrt(relu_sq_mmd_loss) + self.kl_scaling * kld_loss
-        return loss
-
-
-class SumPixelAndKL(Loss):
-    """
-    Loss function with Sum pixel loss and KL.
-    """
-
-    def __init__(self, conditional: bool = False):
-        """
-        Initialize the SquaredSumAndKL loss.
-
-        :param conditional:
-        """
-        super().__init__(conditional)
-        self.kl_scale = 0.1
-        self.itr = 0
-
-    def step_increase_parameter(self):
-        """
-        Using predefined steps
-        After every 1000 iterations add 0.1
-        """
-        self.itr = self.itr + 1
-        if self.itr % 500 == 0:
-            self.kl_scale = self.kl_scale + 0.1
-
-    @partial(jax.jit, static_argnames=['self'])
-    def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
-                 z_rng: KeyArray) -> jnp.ndarray:
-        """
-        Calculates the loss value.
-
-        :param state_params: Current state parameters of the model.
-        :param state: Current state of the model.
-        :param batch: Current batch of the data. It is list of [x, y, c] values.
-        :param z_rng: a PRNG key used as the random key.
-        """
-        _, y, ls = batch
-        c = ls if self.conditional else None
-        y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
-        pixel_loss = pixel_sum_loss(y, y_hat)
-        kld_loss = self.kl_scale * kl_divergence(z_mu, z_logvar)
-        loss = pixel_loss + kld_loss
-        self.step_increase_parameter()
         return loss
