@@ -19,12 +19,17 @@ def kl_divergence(mean: jnp.ndarray, logvar: jnp.ndarray) -> jnp.ndarray:
 
     Detailed derivation can be found here: https://learnopencv.com/variational-autoencoder-in-tensorflow/
 
-    :param mean: the mean of the Gaussian distribution with shape (N,).
-    :param logvar: the log-variance of the Gaussian distribution with shape (N,) i.e. only diagonal values considered.
+    :param mean: the mean of the Gaussian distribution with shape (B, D).
+    :param logvar: the log-variance of the Gaussian distribution with shape (B, D) i.e. only diagonal values considered.
 
     :return: the KL divergence value.
+
+    Note: We mean over the batch values.
     """
-    return -0.5 * jnp.sum(1 + logvar - jnp.square(mean) - jnp.exp(logvar))
+    assert len(mean.shape) == len(logvar.shape) == 2
+    assert mean.shape == logvar.shape
+
+    return jnp.mean(-0.5 * jnp.sum(1 + logvar - jnp.square(mean) - jnp.exp(logvar), axis=-1), axis=0)
 
 
 @jax.jit
@@ -38,14 +43,17 @@ def scaled_sum_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_va
 
     -1 * log N (y | y', sigma) \approx -0.5 ((y - y'/sigma)^2)
 
-    :param y: the ground-truth value of y with shape (N, D).
-    :param reconstructed_y: the reconstructed value of y with shape (N, D).
+    :param y: the ground-truth value of y with shape (B, D).
+    :param reconstructed_y: the reconstructed value of y with shape (B, D).
     :param vae_var: a float value representing the varianc of the VAE.
 
     :returns: the loss value
+
+    Note: We mean over the batch values.
     """
+    assert len(y.shape) == len(reconstructed_y.shape) == 2
     assert y.shape == reconstructed_y.shape
-    return 0.5 * jnp.sum((reconstructed_y - y) ** 2 / vae_var)
+    return jnp.mean(0.5 * jnp.sum((reconstructed_y - y) ** 2 / vae_var, axis=-1), 0)
 
 
 @jax.jit
@@ -55,11 +63,12 @@ def mean_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarr
 
     L(y, y') = mean(((y - y')^2))
 
-    :param y: the ground-truth value of y with shape (N, D).
-    :param reconstructed_y: the reconstructed value of y with shape (N, D).
+    :param y: the ground-truth value of y with shape (B, D).
+    :param reconstructed_y: the reconstructed value of y with shape (B, D).
 
     :returns: the loss value
     """
+    assert len(y.shape) == len(reconstructed_y.shape) == 2
     assert y.shape == reconstructed_y.shape
     return jnp.mean((reconstructed_y - y) ** 2)
 
@@ -108,3 +117,28 @@ def square_maximum_mean_discrepancy(kernel: Kernel, target_samples: jnp.ndarray,
 
     mmd_val_square = term_xx + term_yy - term_xy
     return mmd_val_square
+
+
+@jax.jit
+def pixel_sum_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarray:
+    """
+    Sum of absolute error between pixels of an image and a mean over batch.
+
+    L(y, y') = sum(y - y')
+
+    :param y: the ground-truth value of y with shape (N, D, D, C).
+    :param reconstructed_y: the reconstructed value of y with shape (N, D, D, C).
+
+    :returns: the loss value
+    """
+    assert len(y.shape) == 4
+    assert y.shape == reconstructed_y.shape
+
+    N, D, D, C = y.shape
+
+    pixel_diff = jnp.abs(y - reconstructed_y)  # (N, D, D, C)
+    sum_pixel_diff = jnp.sum(pixel_diff.reshape((N, -1)), axis=-1)  # (N, )
+    assert sum_pixel_diff.shape == (N, )
+    mean_loss_val = jnp.mean(sum_pixel_diff, axis=0)  # Over batch
+
+    return mean_loss_val
