@@ -2,5 +2,5 @@
 
 _target_: optax.exponential_decay
 init_value: 1e-3
-transition_steps: ${num_iterations}
+transition_steps: ${iterations}
 decay_rate: 0.98

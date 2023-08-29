@@ -19,7 +19,7 @@ latent_dim: 40
 
 n_samples: 100000
 batch_size: 1000
-num_epochs: 400
+iterations: 400
 conditional: True
 vae_var: 1.0
 debug: True

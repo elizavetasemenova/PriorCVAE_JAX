@@ -13,7 +13,7 @@ import jax.config as config
 
 config.update("jax_enable_x64", True)
 
-from priorCVAE.utility import save_model_params
+from priorCVAE.utility import save_model_params, create_grid
 from exp_utils import get_hydra_output_dir, plot_lengthscales, plot_gp_samples, plot_decoder_samples, setup_wandb, \
     move_wandb_hydra_files
 
@@ -32,8 +32,8 @@ def run_experiment(cfg: DictConfig):
     log.info(f"---------------------------------------------")
 
     # Data generator
-    data_generator = instantiate(cfg.data_generator)(n_data=cfg.n_data, x_lim_low=cfg.x0, x_lim_high=cfg.x1,
-                                                     sample_lengthscale=cfg.sample_lengthscale)
+    x = create_grid(n_data=cfg.n_data, lim_low=cfg.x0, lim_high=cfg.x1, dim=1)
+    data_generator = instantiate(cfg.data_generator)(x=x)
     batch_x_train, batch_y_train, batch_ls_train = data_generator.simulatedata(n_samples=cfg.batch_size)
     x_test, y_test, ls_test = data_generator.simulatedata(n_samples=cfg.batch_size)
     log.info(f"Data generator initialized...")
@@ -69,7 +69,7 @@ def run_experiment(cfg: DictConfig):
     log.info(f"Starting training...")
     log.info(f"---------------------------------------------")
 
-    train_loss, test_loss, time_taken = trainer.train(data_generator, test_set, cfg.num_iterations,
+    train_loss, test_loss, time_taken = trainer.train(data_generator, test_set, cfg.iterations,
                                                       batch_size=cfg.batch_size, debug=cfg.debug)
 
     log.info(f"---------------------------------------------")
