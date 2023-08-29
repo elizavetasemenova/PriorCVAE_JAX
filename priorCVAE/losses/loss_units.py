@@ -147,3 +147,27 @@ def Gaussian_NLL(y: jnp.ndarray, reconstructed_y_m: jnp.ndarray, reconstructed_y
     assert determinant_term.shape == diff_term.shape == (y.shape[0], )
     nll_val = -0.5 * (determinant_term + diff_term)
     return -1 * jnp.mean(nll_val, axis=0)
+
+
+def pixel_sum_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarray:
+    """
+    Sum of absolute error between pixels of an image and a mean over batch.
+
+    L(y, y') = sum(y - y')
+
+    :param y: the ground-truth value of y with shape (N, D, D, C).
+    :param reconstructed_y: the reconstructed value of y with shape (N, D, D, C).
+
+    :returns: the loss value
+    """
+    assert len(y.shape) == 4
+    assert y.shape == reconstructed_y.shape
+
+    N, D, D, C = y.shape
+
+    pixel_diff = jnp.abs(y - reconstructed_y)  # (N, D, D, C)
+    sum_pixel_diff = jnp.sum(pixel_diff.reshape((N, -1)), axis=-1)  # (N, )
+    assert sum_pixel_diff.shape == (N, )
+    mean_loss_val = jnp.mean(sum_pixel_diff, axis=0)  # Over batch
+
+    return mean_loss_val
