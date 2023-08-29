@@ -1,0 +1,8 @@
+n_data: ${grid.size}
+sample_lengthscale: False
+
+instance:
+  _target_: priorCVAE.datasets.GPDataset
+  sample_lengthscale: ${dataset.sample_lengthscale}
+  kernel: ${kernel.instance}
+  x: ${grid.instance}

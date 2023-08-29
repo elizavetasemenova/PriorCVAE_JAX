@@ -4,40 +4,32 @@ Gaussian process dataset.
 """
 
 import random as rnd
-
 import jax.numpy as jnp
 import jax.random
 from jax import random
 from numpyro.infer import Predictive
 
 from priorCVAE.priors import GP, Kernel
+from priorCVAE.utility import create_grid
 
 
 class GPDataset:
     """
-    Generate GP draws over the regular grid in the interval (x_lim_low, x_lim_high) with n_dataPoints points.
-
-    Note: Currently the data is only generated with dimension as 1.
+    Generate GP draws over x.
 
     """
 
-    def __init__(self, kernel: Kernel, n_data: int = 400, x_lim_low: int = 0,
-                 x_lim_high: int = 1, sample_lengthscale: bool = False):
+    def __init__(self, kernel: Kernel, x: jnp.ndarray, sample_lengthscale: bool = False):
         """
         Initialize the Gaussian Process dataset class.
 
         :param kernel: Kernel to be used.
-        :param n_data: number of data points in the interval.
-        :param x_lim_low: lower limit of the interval.
-        :param x_lim_high: upper limit if the interval.
         :param sample_lengthscale: whether to sample lengthscale for the kernel or not. Defaults to False.
+        :param x: jax.numpy.ndarray of the x grid used to generate sample from the GP.
         """
-        self.n_data = n_data
-        self.x_lim_low = x_lim_low
-        self.x_lim_high = x_lim_high
         self.sample_lengthscale = sample_lengthscale
         self.kernel = kernel
-        self.x = jnp.linspace(self.x_lim_low, self.x_lim_high, self.n_data)
+        self.x = x
 
     def simulatedata(self, n_samples: int = 10000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """
@@ -59,33 +51,5 @@ class GPDataset:
         ls_draws = jnp.array(all_draws['ls'])
         gp_draws = jnp.array(all_draws['y'])
 
-        return self.x.repeat(n_samples).reshape(self.x.shape[0], n_samples).transpose(), gp_draws, ls_draws
+        return self.x[None, ...].repeat(n_samples, axis=0), gp_draws, ls_draws
 
-
-class OfflineDataset:
-    """Use offline dataset, and randomly generate a batch from it."""
-
-    def __init__(self, dataset: jnp.ndarray):
-        """
-        Initialize the OfflineDataset class.
-
-        :param dataset: jax ndarray of the dataset
-        """
-        self.dataset = dataset
-
-    def simulatedata(self, n_samples: int = 10000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-        """
-        Make a batch of data from the dataset array.
-
-        :param n_samples: number of samples.
-
-        :returns:
-            - None.
-            - samples.
-            - None.
-        """
-        rng_key, _ = random.split(random.PRNGKey(rnd.randint(0, 9999)))
-
-        batch_data = jax.random.choice(rng_key, self.dataset, [n_samples])
-
-        return None, batch_data, None
