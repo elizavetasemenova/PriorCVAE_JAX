@@ -4,6 +4,7 @@ File contains the Decoder models.
 from abc import ABC
 from math import prod
 from typing import Tuple, Union
+from math import prod
 
 from flax import linen as nn
 import jax.numpy as jnp
@@ -51,14 +52,11 @@ class CNNDecoder(Decoder):
     CNN based decoder with the following structure:
 
     for _ in hidden_dims:
-        z = Activation(Dense(z))
-
-    for _ in conv_features:
-        y = Pooling(Activation(Convolution(y)))
-
-    y = flatten(y)
-
-
+        y = Activation(Dense(y))
+    y = reshape_into_grid(y)
+    for _ in conv_features[:-1]:
+        y = Activation(TransposeConvolution(y))
+    y = TransposeConvolution(y)
 
     """
     conv_features: Tuple[int]

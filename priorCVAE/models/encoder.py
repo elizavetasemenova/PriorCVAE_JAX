@@ -53,7 +53,7 @@ class CNNEncoder(Encoder):
     CNN based encoder with the following structure:
 
     for _ in conv_features:
-        y = Pooling(Activation(Convolution(y)))
+        y = Activation(Convolution(y))
 
     y = flatten(y)
 
