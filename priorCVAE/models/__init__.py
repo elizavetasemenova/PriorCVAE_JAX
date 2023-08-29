@@ -1,3 +1,3 @@
-from .encoder import MLPEncoder, Encoder, CNNEncoder
-from .decoder import MLPDecoder, Decoder, CNNDecoder
+from .encoder import MLPEncoder, Encoder
+from .decoder import MLPDecoder, Decoder
 from .vae import VAE
