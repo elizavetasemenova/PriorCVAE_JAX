@@ -39,20 +39,24 @@ class VAETrainer:
         self.state = None
         self.loss_fn = loss
 
-    def init_params(self, y: jnp.ndarray, c: jnp.ndarray = None, key: KeyArray = None):
+    def init_params(self, y: jnp.ndarray, c: jnp.ndarray = None, key: KeyArray = None, params = None):
         """
         Initialize the parameters of the model.
 
         :param y: sample input of the model.
         :param c: conditional variable, while using vanilla VAE model this should be None.
         :param key: Jax PRNGKey to ensure reproducibility. If none, it is set randomly.
+        :param params: Parameters to initialize the model. If None, parameters are intialized randomly.
         """
-        if key is None:
-            key = jax.random.PRNGKey(random.randint(0, 9999))
-        key, rng = jax.random.split(key, 2)
+        if params is None:
+            if key is None:
+                key = jax.random.PRNGKey(random.randint(0, 9999))
+            key, rng = jax.random.split(key, 2)
 
-        params = self.model.init(rng, y, key, c)['params']
-        self.state = train_state.TrainState.create(apply_fn=self.model.apply, params=params, tx=self.optimizer)
+            params = self.model.init(rng, y, key, c)['params']
+            self.state = train_state.TrainState.create(apply_fn=self.model.apply, params=params, tx=self.optimizer)
+        else:
+            self.state = train_state.TrainState.create(apply_fn=self.model.apply, params=params, tx=self.optimizer)
 
     @partial(jax.jit, static_argnames=['self'])
     def train_step(self, state: train_state.TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],

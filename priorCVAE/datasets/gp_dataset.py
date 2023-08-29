@@ -5,6 +5,7 @@ Gaussian process dataset.
 
 import random as rnd
 import jax.numpy as jnp
+import jax.random
 from jax import random
 from numpyro.infer import Predictive
 
@@ -50,3 +51,4 @@ class GPDataset:
         gp_draws = jnp.array(all_draws['y'])
 
         return self.x[None, ...].repeat(n_samples, axis=0), gp_draws, ls_draws
+

@@ -2,6 +2,7 @@
 File contains the Decoder models.
 """
 from abc import ABC
+from math import prod
 from typing import Tuple, Union
 from math import prod
 
