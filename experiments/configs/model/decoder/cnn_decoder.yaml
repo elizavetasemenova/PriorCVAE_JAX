@@ -1,0 +1,7 @@
+_target_: priorCVAE.models.CNNDecoder
+conv_features: ${dec_conv_features}
+conv_kernel_size: ${dec_conv_kernel_size}
+conv_stride: ${dec_conv_stride}
+hidden_dim: ${dec_hidden_dim}
+decoder_reshape: ${dec_decoder_reshape}
+out_channel: ${dec_out_channel}

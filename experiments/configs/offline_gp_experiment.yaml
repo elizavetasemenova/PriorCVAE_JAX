@@ -13,6 +13,7 @@ n_data: 80
 x0: 0
 x1: 1
 sample_lengthscale: True
+discrete_ls: null
 
 hidden_dim: 60
 latent_dim: 40
@@ -24,7 +25,7 @@ conditional: True
 vae_var: 1.0
 debug: True
 
-plot_ls: 0.05
+plot_ls: 0.3
 
 wandb:
   username: null

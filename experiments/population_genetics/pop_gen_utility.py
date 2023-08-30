@@ -1,7 +1,9 @@
 """
 Utility functions for population genetics experiment.
 """
+import random
 
+import jax
 import jax.numpy as jnp
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -48,3 +50,21 @@ def plot_data(data: jnp.ndarray):
     plt.suptitle("Sample data.")
     plt.tight_layout()
     plt.show()
+
+
+def plot_decoder_samples(decoder, decoder_params, latent_dim: int, n: int = 10, output_dir: str = ""):
+    """
+    Plot decoder samples.
+    """
+    key = jax.random.PRNGKey(random.randint(0, 9999))
+    rng, z_rng = jax.random.split(key, 2)
+    z = jax.random.normal(z_rng, (n, latent_dim))
+
+    out = decoder.apply({'params': decoder_params}, z)
+
+    for i, o in enumerate(out):
+        plt.clf()
+        plt.imshow(o.reshape(32, 32))
+        if output_dir != "":
+            plt.savefig(f"{output_dir}/output/{i}.png")
+        plt.show()

@@ -2,7 +2,6 @@
 File contains the Decoder models.
 """
 from abc import ABC
-from math import prod
 from typing import Tuple, Union
 from math import prod
 
@@ -123,11 +122,11 @@ class CNNDecoder(Decoder):
 
         # MLP layers
         for i, (hidden_dim, activation_fn) in enumerate(zip(hidden_dims, activations)):
-            y = nn.Dense(hidden_dim, name=f"enc_hidden_{i}")(y)
+            y = nn.Dense(hidden_dim, name=f"dec_hidden_{i}")(y)
             y = activation_fn(y)
 
         # Apply Dense and reshape into grid
-        y = nn.Dense(prod(self.decoder_reshape), name=f"enc_hidden_reshape")(y)
+        y = nn.Dense(prod(self.decoder_reshape), name=f"dec_hidden_reshape")(y)
         y = activations[-1](y)  # FIXME: should be -1 or new variable?
         y = y.reshape((-1,) + self.decoder_reshape)
 
