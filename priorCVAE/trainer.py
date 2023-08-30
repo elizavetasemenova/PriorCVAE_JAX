@@ -131,7 +131,8 @@ class VAETrainer:
                     wandb.log({"Test Loss": loss_test[-1]}, step=iterations)
 
                     ls_to_plot = random.random()
-                    self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
+                    if test_set[0] is not None:
+                        self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
 
         t_elapsed = time.time() - t_start
 
