@@ -133,10 +133,41 @@ class VAETrainer:
                     ls_to_plot = random.random()
                     if test_set[0] is not None:
                         self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
+                    else:
+                        self.log_decoder_images(iterations)
 
         t_elapsed = time.time() - t_start
 
         return loss_train, loss_test, t_elapsed
+
+    def log_decoder_images(self, itr: int, n: int = 15, plot_mean: bool = True):
+        # FIXME: Merge two logging functions
+        decoder = self.model.decoder
+        decoder_params = self.state.params["decoder"]
+        latent_dim = self.model.encoder.latent_dim
+        # conditional = self.loss_fn.conditional
+
+        key = jax.random.PRNGKey(random.randint(0, 9999))
+        rng, z_rng, init_rng = jax.random.split(key, 3)
+        z = jax.random.normal(z_rng, (n, latent_dim))
+
+        # if conditional:
+            # FIXME: To implement
+
+        m = decoder.apply({'params': decoder_params}, z)
+        S = 1
+
+        if plot_mean:
+            out = m
+        else:
+            out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
+
+        plt.clf()
+        fig, ax = plt.subplots(figsize=(4, 3))
+        for i in range(n):
+            ax.imshow(out[i, :].reshape((32, 32)))
+
+        wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
 
     def log_decoder_samples(self, ls: float, x_val: jnp.ndarray, itr: int, n: int = 15, plot_mean: bool = True):
         """
@@ -175,8 +206,7 @@ class VAETrainer:
         ax.set_ylabel('$y=f_{VAE}(x)$')
         ax.set_title(f'Examples of learnt trajectories (ls={ls})')
 
-        if wandb.run:
-            wandb.log({f"Decoder Samples (ls={ls})": wandb.Image(plt)}, step=itr)
+        wandb.log({f"Decoder Samples (ls={ls})": wandb.Image(plt)}, step=itr)
 
     def train_sequentially(self, data_generator, test_set: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
                            num_epochs: int = 10, batch_size: int = 100, debug: bool = True,
