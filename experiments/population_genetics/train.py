@@ -85,7 +85,9 @@ def run_experiment(cfg: DictConfig):
         output_dir = move_wandb_hydra_files(output_dir)  # Move files to a different folder with wandb run id
 
     trained_decoder_params = trainer.state.params["decoder"]
-    plot_decoder_samples(decoder, trained_decoder_params, latent_dim=cfg.enc_latent_dim, output_dir=output_dir)
+    samples_output_dir = os.path.join(output_dir, "out_samples")
+    os.makedirs(samples_output_dir)
+    plot_decoder_samples(decoder, trained_decoder_params, latent_dim=cfg.enc_latent_dim, output_dir=samples_output_dir)
 
     # Save model
     save_model_params(os.path.join(output_dir, "model"), trainer.state.params)

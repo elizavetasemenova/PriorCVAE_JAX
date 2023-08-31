@@ -66,5 +66,5 @@ def plot_decoder_samples(decoder, decoder_params, latent_dim: int, n: int = 10, 
         plt.clf()
         plt.imshow(o.reshape(32, 32))
         if output_dir != "":
-            plt.savefig(f"{output_dir}/output/{i}.png")
+            plt.savefig(f"{output_dir}/{i}.png")
         plt.show()

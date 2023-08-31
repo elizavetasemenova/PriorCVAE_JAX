@@ -119,7 +119,7 @@ class NLLAndKL(Loss):
         """
         super().__init__(conditional)
         self.nll_scale = 1
-        self.kl_scale = 0.5
+        self.kl_scale = 0.0
         self.itr = 0
 
     @partial(jax.jit, static_argnames=['self'])
@@ -135,7 +135,7 @@ class NLLAndKL(Loss):
         """
         self.itr = self.itr + 1
         if self.itr % 500 == 0:
-            self.kl_scale = self.kl_scale + 0.1
+            self.kl_scale = self.kl_scale + 0.05
 
         _, y, ls = batch
         c = ls if self.conditional else None

@@ -140,12 +140,13 @@ class VAETrainer:
 
         return loss_train, loss_test, t_elapsed
 
-    def log_decoder_images(self, itr: int, n: int = 15, plot_mean: bool = True):
+    def log_decoder_images(self, itr: int, plot_mean: bool = True):
         # FIXME: Merge two logging functions
         decoder = self.model.decoder
         decoder_params = self.state.params["decoder"]
         latent_dim = self.model.encoder.latent_dim
         # conditional = self.loss_fn.conditional
+        n = 9
 
         key = jax.random.PRNGKey(random.randint(0, 9999))
         rng, z_rng, init_rng = jax.random.split(key, 3)
@@ -163,13 +164,16 @@ class VAETrainer:
             out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
 
         plt.clf()
-        fig, ax = plt.subplots(figsize=(4, 3))
+        fig, ax = plt.subplots(3, 3, figsize=(15, 12))
         for i in range(n):
-            ax.imshow(out[i, :].reshape((32, 32)))
+            row = int(i / 3)
+            cols = int(i % 3)
+            ax[row][cols].imshow(out[i, :].reshape((32, 32)))
 
         wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
+        plt.close()
 
-    def log_decoder_samples(self, ls: float, x_val: jnp.ndarray, itr: int, n: int = 15, plot_mean: bool = True):
+    def log_decoder_samples(self, ls: float, x_val: jnp.ndarray, itr: int, plot_mean: bool = True):
         """
         Log decoder samples to wandb.
         """
@@ -177,6 +181,7 @@ class VAETrainer:
         decoder_params = self.state.params["decoder"]
         latent_dim = self.model.encoder.latent_dim
         conditional = self.loss_fn.conditional
+        n = 9
 
         key = jax.random.PRNGKey(random.randint(0, 9999))
         rng, z_rng, init_rng = jax.random.split(key, 3)
@@ -199,14 +204,15 @@ class VAETrainer:
             out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
 
         plt.clf()
-        fig, ax = plt.subplots(figsize=(4, 3))
+        fig, ax = plt.subplots(3, 3, figsize=(16, 12))
         for i in range(n):
-            ax.plot(x_val, out[i, :])
-        ax.set_xlabel('$x$')
-        ax.set_ylabel('$y=f_{VAE}(x)$')
-        ax.set_title(f'Examples of learnt trajectories (ls={ls})')
+            row = int(i / 3)
+            cols = int(i % 3)
+            ax[row][cols].plot(x_val, out[i, :])
 
+        plt.title(f'Examples of learnt trajectories (ls={ls})')
         wandb.log({f"Decoder Samples (ls={ls})": wandb.Image(plt)}, step=itr)
+        plt.close()
 
     def train_sequentially(self, data_generator, test_set: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
                            num_epochs: int = 10, batch_size: int = 100, debug: bool = True,
