@@ -163,7 +163,7 @@ def pixel_sum_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarray:
     assert len(y.shape) == 4
     assert y.shape == reconstructed_y.shape
 
-    N, D, D, C = y.shape
+    N, D, _, C = y.shape
 
     pixel_diff = jnp.abs(y - reconstructed_y)  # (N, D, D, C)
     sum_pixel_diff = jnp.sum(pixel_diff.reshape((N, -1)), axis=-1)  # (N, )

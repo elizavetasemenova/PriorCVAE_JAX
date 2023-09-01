@@ -70,8 +70,8 @@ class VAETrainer:
 
         :returns: Updated state of the model and the loss value.
         """
-        val, grads = jax.value_and_grad(self.loss_fn)(state.params, state, batch, z_rng)
-        return state.apply_gradients(grads=grads), val
+        (val, loss_component_vals), grads = jax.value_and_grad(self.loss_fn, has_aux=True)(state.params, state, batch, z_rng)
+        return state.apply_gradients(grads=grads), val, loss_component_vals
 
     @partial(jax.jit, static_argnames=['self'])
     def eval_step(self, state: train_state.TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
@@ -116,22 +116,24 @@ class VAETrainer:
             # Generate new batch
             batch_train = data_generator.simulatedata(batch_size)
             z_key, key = jax.random.split(z_key)
-            self.state, loss_train_value = self.train_step(self.state, batch_train, key)
+            self.state, loss_train_value, loss_component_vals = self.train_step(self.state, batch_train, key)
             loss_train.append(loss_train_value)
 
             # Test
             test_key, key = jax.random.split(test_key)
-            loss_test_value = self.eval_step(self.state, test_set, test_key)
+            loss_test_value, _ = self.eval_step(self.state, test_set, test_key)
             loss_test.append(loss_test_value)
 
             if debug and iterations % 10 == 0:
                 log.info(f'[{iterations + 1:5d}] training loss: {loss_train[-1]:.3f}, test loss: {loss_test[-1]:.3f}')
                 if wandb.run:
                     wandb.log({"Train Loss": loss_train[-1]}, step=iterations)
+                    wandb.log({"Regulzarization Loss": loss_component_vals[0]}, step=iterations)
+                    wandb.log({"Reconstruction Loss": loss_component_vals[1]}, step=iterations)
                     wandb.log({"Test Loss": loss_test[-1]}, step=iterations)
 
-                    ls_to_plot = random.random()
                     if test_set[0] is not None:
+                        ls_to_plot = random.random()
                         self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
                     else:
                         self.log_decoder_images(iterations)
@@ -251,12 +253,12 @@ class VAETrainer:
 
                 batch_train = data_generator.simulatedata(batch_idx=batch_idx)
                 z_key, key = jax.random.split(z_key)
-                self.state, loss_train_value = self.train_step(self.state, batch_train, key)
+                self.state, loss_train_value, loss_component_vals = self.train_step(self.state, batch_train, key)
                 loss_train.append(loss_train_value)
 
                 # Test
                 test_key, key = jax.random.split(test_key)
-                loss_test_value = self.eval_step(self.state, test_set, test_key)
+                loss_test_value, _ = self.eval_step(self.state, test_set, test_key)
                 loss_test.append(loss_test_value)
 
             if debug:
@@ -264,6 +266,8 @@ class VAETrainer:
                 if wandb.run:
                     wandb.log({"Train Loss": loss_train[-1]}, step=e)
                     wandb.log({"Test Loss": loss_test[-1]}, step=e)
+                    wandb.log({"Regulzarization Loss": loss_component_vals[0]}, step=e)
+                    wandb.log({"Reconstruction Loss": loss_component_vals[1]}, step=e)
 
         t_elapsed = time.time() - t_start
 

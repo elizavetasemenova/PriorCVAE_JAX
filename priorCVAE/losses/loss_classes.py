@@ -27,7 +27,7 @@ class Loss(ABC):
 
     @abstractmethod
     def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
-                 z_rng: KeyArray):
+                 z_rng: KeyArray) -> [jnp.ndarray, (jnp.ndarray, jnp.ndarray)]:
         pass
 
 
@@ -48,7 +48,7 @@ class SquaredSumAndKL(Loss):
 
     @partial(jax.jit, static_argnames=['self'])
     def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
-                 z_rng: KeyArray) -> jnp.ndarray:
+                 z_rng: KeyArray) -> [jnp.ndarray, (jnp.ndarray, jnp.ndarray)]:
         """
         Calculates the loss value.
 
@@ -63,7 +63,7 @@ class SquaredSumAndKL(Loss):
         rcl_loss = scaled_sum_squared_loss(y, y_hat, vae_var=self.vae_var)
         kld_loss = kl_divergence(z_mu, z_logvar)
         loss = rcl_loss + kld_loss
-        return loss
+        return loss, (kld_loss, rcl_loss)
 
 
 class MMDAndKL(Loss):
@@ -85,7 +85,7 @@ class MMDAndKL(Loss):
 
     @partial(jax.jit, static_argnames=['self'])
     def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
-                 z_rng: KeyArray) -> jnp.ndarray:
+                 z_rng: KeyArray) -> [jnp.ndarray, (jnp.ndarray, jnp.ndarray)]:
         """
         Calculates the loss value.
 
@@ -100,9 +100,10 @@ class MMDAndKL(Loss):
 
         sq_mmd_loss = square_maximum_mean_discrepancy(self.kernel, y, y_hat, efficient_grads=True)
         relu_sq_mmd_loss = nn.relu(sq_mmd_loss)  # Applying ReLU for avoiding negative MMD values
-        kld_loss = kl_divergence(z_mu, z_logvar)
-        loss = jnp.sqrt(relu_sq_mmd_loss) + self.kl_scaling * kld_loss
-        return loss
+        kld_loss = self.kl_scaling * kl_divergence(z_mu, z_logvar)
+        mmd_loss = jnp.sqrt(relu_sq_mmd_loss)
+        loss = mmd_loss + kld_loss
+        return loss, (kld_loss, mmd_loss)
 
 
 class NLLAndKL(Loss):
@@ -124,7 +125,7 @@ class NLLAndKL(Loss):
 
     @partial(jax.jit, static_argnames=['self'])
     def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
-                 z_rng: KeyArray) -> jnp.ndarray:
+                 z_rng: KeyArray) -> [jnp.ndarray, (jnp.ndarray, jnp.ndarray)]:
         """
         Calculates the loss value.
 
@@ -144,7 +145,7 @@ class NLLAndKL(Loss):
         kld_loss = self.kl_scale * kl_divergence(z_mu, z_logvar)
         loss = nll_loss + kld_loss
 
-        return loss
+        return loss, (kld_loss, nll_loss)
 
 
 class SumPixelAndKL(Loss):
@@ -173,7 +174,7 @@ class SumPixelAndKL(Loss):
 
     @partial(jax.jit, static_argnames=['self'])
     def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
-                 z_rng: KeyArray) -> jnp.ndarray:
+                 z_rng: KeyArray) -> [jnp.ndarray, (jnp.ndarray, jnp.ndarray)]:
         """
         Calculates the loss value.
 
@@ -189,4 +190,4 @@ class SumPixelAndKL(Loss):
         kld_loss = self.kl_scale * kl_divergence(z_mu, z_logvar)
         loss = pixel_loss + kld_loss
         self.step_increase_parameter()
-        return loss
+        return loss, (kld_loss, pixel_loss)
