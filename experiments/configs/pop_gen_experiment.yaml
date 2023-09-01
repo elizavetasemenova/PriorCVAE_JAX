@@ -6,6 +6,8 @@ defaults:
   - trainer: vae_trainer
   - optimizer: adam
   - loss: sum_pixel_kl
+  - model/activations@enc_conv_activation: tanh
+  - model/activations@dec_conv_activation: tanh
 
 enc_conv_features: [3, 8]
 enc_hidden_dim: [300, 120, 60]

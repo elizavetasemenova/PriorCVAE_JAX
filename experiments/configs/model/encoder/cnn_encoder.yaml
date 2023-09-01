@@ -2,3 +2,4 @@ _target_: priorCVAE.models.CNNEncoder
 conv_features: ${enc_conv_features}
 hidden_dim: ${enc_hidden_dim}
 latent_dim: ${enc_latent_dim}
+conv_activation: ${enc_conv_activation}

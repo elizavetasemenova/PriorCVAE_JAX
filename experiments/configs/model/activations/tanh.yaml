@@ -1,0 +1,2 @@
+_target_: flax.linen.tanh
+_partial_: True

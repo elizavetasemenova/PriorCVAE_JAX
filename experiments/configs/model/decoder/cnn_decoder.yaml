@@ -5,3 +5,4 @@ conv_stride: ${dec_conv_stride}
 hidden_dim: ${dec_hidden_dim}
 decoder_reshape: ${dec_decoder_reshape}
 out_channel: ${dec_out_channel}
+conv_activation: ${dec_conv_activation}
