@@ -119,7 +119,7 @@ class NLLAndKL(Loss):
         """
         super().__init__(conditional)
         self.nll_scale = 1
-        self.kl_scale = 0.0
+        self.kl_scale = 0.1
         self.itr = 0
 
     @partial(jax.jit, static_argnames=['self'])
@@ -135,7 +135,7 @@ class NLLAndKL(Loss):
         """
         self.itr = self.itr + 1
         if self.itr % 500 == 0:
-            self.kl_scale = self.kl_scale + 0.05
+            self.kl_scale = min(self.kl_scale + 0.1, 1.)
 
         _, y, ls = batch
         c = ls if self.conditional else None
@@ -169,7 +169,7 @@ class SumPixelAndKL(Loss):
         """
         self.itr = self.itr + 1
         if int(self.itr % 500) == 0:
-            self.kl_scale = self.kl_scale + 0.1
+            self.kl_scale = min(self.kl_scale + 0.1, 1.)
 
     @partial(jax.jit, static_argnames=['self'])
     def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],

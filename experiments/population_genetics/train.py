@@ -12,7 +12,7 @@ import hydra
 from omegaconf import DictConfig
 from hydra.utils import instantiate
 import jax.config as config
-from priorCVAE.utility import save_model_params
+from priorCVAE.utility import save_model_params, load_model_params
 from experiments.exp_utils import get_hydra_output_dir, setup_wandb, move_wandb_hydra_files
 from pop_gen_utility import read_csv_data, split_data_into_time_batches, plot_decoder_samples
 
@@ -64,7 +64,12 @@ def run_experiment(cfg: DictConfig):
     loss = instantiate(cfg.loss)
 
     trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss)
-    trainer.init_params(last_t_data[:2])
+
+    params = None
+    if cfg.load_model_path != "":
+        params = load_model_params(cfg.load_model_path)
+
+    trainer.init_params(last_t_data[:2], params=params)
 
     test_set = (None, test_data, None)
     log.info(f"Starting training...")
