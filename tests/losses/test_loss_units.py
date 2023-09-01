@@ -6,7 +6,7 @@ import jax
 import numpy as np
 import jax.numpy as jnp
 
-from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, mean_squared_loss, square_maximum_mean_discrepancy, Gaussian_NLL, pixel_sum_loss
+from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, mean_squared_loss, square_maximum_mean_discrepancy, Gaussian_NLL, square_pixel_sum_loss
 from priorCVAE.priors import SquaredExponential
 
 
@@ -135,9 +135,9 @@ def test_pixel_sum_loss(num_data, dimension):
     key, _ = jax.random.split(key)
     y_reconstruction = jax.random.uniform(key=key, shape=(num_data, dimension, dimension, 1), minval=0.1, maxval=4.)
 
-    loss = pixel_sum_loss(y, y_reconstruction)
+    loss = square_pixel_sum_loss(y, y_reconstruction)
 
-    expected_val = jnp.sum(jnp.abs(y - y_reconstruction).reshape((num_data, -1)), axis=1)
+    expected_val = jnp.sum(jnp.square(y - y_reconstruction).reshape((num_data, -1)), axis=1)
     expected_val = jnp.mean(expected_val, axis=0)
 
     np.testing.assert_array_almost_equal(expected_val, loss, decimal=6)

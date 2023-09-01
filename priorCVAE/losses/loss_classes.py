@@ -12,7 +12,7 @@ from flax.training.train_state import TrainState
 from flax.core import FrozenDict
 import flax.linen as nn
 
-from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, square_maximum_mean_discrepancy, Gaussian_NLL, pixel_sum_loss
+from priorCVAE.losses import kl_divergence, scaled_sum_squared_loss, square_maximum_mean_discrepancy, Gaussian_NLL, square_pixel_sum_loss
 
 from priorCVAE.priors import Kernel
 
@@ -161,6 +161,7 @@ class SumPixelAndKL(Loss):
         """
         super().__init__(conditional)
         self.kl_scale = 0.1
+        self.pixel_loss_scale = 10
         self.itr = 0
 
     def step_increase_parameter(self):
@@ -186,7 +187,7 @@ class SumPixelAndKL(Loss):
         _, y, ls = batch
         c = ls if self.conditional else None
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
-        pixel_loss = pixel_sum_loss(y, y_hat)
+        pixel_loss = self.pixel_loss_scale * square_pixel_sum_loss(y, y_hat)
         kld_loss = self.kl_scale * kl_divergence(z_mu, z_logvar)
         loss = pixel_loss + kld_loss
         self.step_increase_parameter()

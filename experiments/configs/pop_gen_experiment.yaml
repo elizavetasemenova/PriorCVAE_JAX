@@ -11,7 +11,7 @@ defaults:
 
 enc_conv_features: [3, 8]
 enc_hidden_dim: [300, 120, 60]
-enc_latent_dim: 30
+enc_latent_dim: 60
 
 dec_conv_features: [5, 3, 1]
 dec_conv_kernel_size: [[2, 2], [2, 2], [5, 5]]
@@ -20,8 +20,8 @@ dec_hidden_dim: [120, 300]
 dec_decoder_reshape: [7, 7, 8]
 dec_out_channel: 1
 
-batch_size: 10000
-iterations: 10000
+batch_size: 1000
+iterations: 5000
 debug: True
 
 wandb:
