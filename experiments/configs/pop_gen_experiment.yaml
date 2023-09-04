@@ -8,6 +8,7 @@ defaults:
   - loss: sum_pixel_kl
   - model/activations@enc_conv_activation: tanh
   - model/activations@dec_conv_activation: tanh
+  - kernel@mmd: squared_exponential
 
 enc_conv_features: [3, 8]
 enc_hidden_dim: [300, 120, 60]
@@ -32,3 +33,6 @@ conditional: False
 
 data_path: ???
 load_model_path: ""
+vmin: 0
+vmax: 1
+normalize_data: True

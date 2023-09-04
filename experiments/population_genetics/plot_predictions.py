@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     for i, o in enumerate(out):
         plt.clf()
-        plt.imshow(o.reshape(32, 32))
+        plt.imshow(o.reshape(32, 32), vmin=0, vmax=1)
         if output_dir != "":
             plt.savefig(f"{output_dir}/{i}.png")
         plt.show()

@@ -98,6 +98,9 @@ class MMDAndKL(Loss):
         c = ls if self.conditional else None
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
 
+        y = y.reshape((y.shape[0], -1))
+        y_hat = y_hat.reshape((y.shape[0], -1))
+
         sq_mmd_loss = square_maximum_mean_discrepancy(self.kernel, y, y_hat, efficient_grads=True)
         relu_sq_mmd_loss = nn.relu(sq_mmd_loss)  # Applying ReLU for avoiding negative MMD values
         kld_loss = self.kl_scaling * kl_divergence(z_mu, z_logvar)

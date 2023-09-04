@@ -26,7 +26,8 @@ class VAETrainer:
     VAE trainer class.
     """
 
-    def __init__(self, model: VAE, optimizer: GradientTransformation, loss: Loss = SquaredSumAndKL()):
+    def __init__(self, model: VAE, optimizer: GradientTransformation, loss: Loss = SquaredSumAndKL(), vmin: float = 0,
+                 vmax: float = 1.):
         """
         Initialize the VAETrainer object.
 
@@ -38,8 +39,10 @@ class VAETrainer:
         self.optimizer = optimizer
         self.state = None
         self.loss_fn = loss
+        self.vmin = vmin
+        self.vmax = vmax
 
-    def init_params(self, y: jnp.ndarray, c: jnp.ndarray = None, key: KeyArray = None, params = None):
+    def init_params(self, y: jnp.ndarray, c: jnp.ndarray = None, key: KeyArray = None, params=None):
         """
         Initialize the parameters of the model.
 
@@ -170,7 +173,7 @@ class VAETrainer:
         for i in range(n):
             row = int(i / 3)
             cols = int(i % 3)
-            ax[row][cols].imshow(out[i, :].reshape((32, 32)))
+            ax[row][cols].imshow(out[i, :].reshape((32, 32)), vmin=self.vmin, vmax=self.vmax)
 
         wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
         plt.close()

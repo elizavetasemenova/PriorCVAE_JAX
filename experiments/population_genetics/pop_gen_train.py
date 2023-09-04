@@ -14,7 +14,7 @@ from hydra.utils import instantiate
 import jax.config as config
 from priorCVAE.utility import save_model_params, load_model_params
 from experiments.exp_utils import get_hydra_output_dir, setup_wandb, move_wandb_hydra_files
-from pop_gen_utility import read_csv_data, split_data_into_time_batches, plot_decoder_samples
+from pop_gen_utility import read_csv_data, split_data_into_time_batches, plot_decoder_samples, normalize_data
 
 config.update("jax_enable_x64", True)
 log = logging.getLogger(__name__)
@@ -38,6 +38,10 @@ def run_experiment(cfg: DictConfig):
     prior_data = time_sliced_data[:, :, 3:]
     # take only the last image
     last_t_data = prior_data[:, -1, :]
+
+    if cfg.normalize_data:
+        last_t_data = normalize_data(last_t_data)
+
     last_t_data = last_t_data.reshape((-1, 32, 32, 1))
 
     # FIXME: Split shouldn't happen here
@@ -63,7 +67,7 @@ def run_experiment(cfg: DictConfig):
     optimizer = instantiate(cfg.optimizer)
     loss = instantiate(cfg.loss)
 
-    trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss)
+    trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, vmin=cfg.vmin, vmax=cfg.vmax)
 
     params = None
     if cfg.load_model_path != "":
@@ -92,7 +96,8 @@ def run_experiment(cfg: DictConfig):
     trained_decoder_params = trainer.state.params["decoder"]
     samples_output_dir = os.path.join(output_dir, "out_samples")
     os.makedirs(samples_output_dir)
-    plot_decoder_samples(decoder, trained_decoder_params, latent_dim=cfg.enc_latent_dim, output_dir=samples_output_dir)
+    plot_decoder_samples(decoder, trained_decoder_params, latent_dim=cfg.enc_latent_dim, output_dir=samples_output_dir,
+                         vmin=cfg.vmin, vmax=cfg.vmax)
 
     # Save model
     save_model_params(os.path.join(output_dir, "model"), trainer.state.params)

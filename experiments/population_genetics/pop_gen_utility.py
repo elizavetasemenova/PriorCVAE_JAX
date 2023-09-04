@@ -29,11 +29,13 @@ def read_csv_data(file_path: str) -> jnp.ndarray:
     return jnp.array(pd.read_csv(file_path).values)
 
 
-def plot_data(data: jnp.ndarray):
+def plot_data(data: jnp.ndarray, vmin: float = 0, vmax: float = 1):
     """
     Plot a time-sliced data.
 
     :param data: jax.np.ndarray of shape [time_slice, D]
+    :param vmin: minimum value of the pixel.
+    :param vmax: maximum value of the pixel.
 
     Note: Currently the code only works with time_slice=6.
     """
@@ -45,14 +47,15 @@ def plot_data(data: jnp.ndarray):
         col = int(i % 3)
 
         img_shape = int(jnp.sqrt(arr.shape[0]))
-        axs[row][col].imshow(arr.reshape((img_shape, img_shape)))
+        axs[row][col].imshow(arr.reshape((img_shape, img_shape)), vmin=vmin, vmax=vmax)
 
     plt.suptitle("Sample data.")
     plt.tight_layout()
     plt.show()
 
 
-def plot_decoder_samples(decoder, decoder_params, latent_dim: int, n: int = 10, output_dir: str = ""):
+def plot_decoder_samples(decoder, decoder_params, latent_dim: int, n: int = 10, output_dir: str = "",
+                         vmin: float = 0, vmax: float = 1):
     """
     Plot decoder samples.
     """
@@ -64,7 +67,20 @@ def plot_decoder_samples(decoder, decoder_params, latent_dim: int, n: int = 10, 
 
     for i, o in enumerate(out):
         plt.clf()
-        plt.imshow(o.reshape(32, 32))
+        plt.imshow(o.reshape(32, 32), vmin=vmin, vmax=vmax)
         if output_dir != "":
             plt.savefig(f"{output_dir}/{i}.png")
         plt.show()
+
+
+def normalize_data(data: jnp.ndarray) -> jnp.ndarray:
+    """
+    Normalize data to be zero mean and 1 std-dev.
+    """
+    assert len(data.shape) == 2
+    data_mean = jnp.mean(data, axis=0)[None, ...]
+    data_std = jnp.std(data, axis=0)[None, ...]
+
+    data_preprocessed = (data - data_mean) / data_std
+
+    return data_preprocessed
