@@ -131,8 +131,10 @@ class VAETrainer:
                 log.info(f'[{iterations + 1:5d}] training loss: {loss_train[-1]:.3f}, test loss: {loss_test[-1]:.3f}')
                 if wandb.run:
                     wandb.log({"Train Loss": loss_train[-1]}, step=iterations)
-                    wandb.log({"Regulzarization Loss": loss_component_vals[0]}, step=iterations)
-                    wandb.log({"Reconstruction Loss": loss_component_vals[1]}, step=iterations)
+
+                    for key in loss_component_vals.keys():
+                        val = loss_component_vals[key]
+                        wandb.log({key: val}, step=iterations)
                     wandb.log({"Test Loss": loss_test[-1]}, step=iterations)
 
                     if test_set[0] is not None:
