@@ -2,7 +2,7 @@
 Trainer class for training Prior{C}VAE models.
 """
 import time
-from typing import List
+from typing import List, Tuple
 from functools import partial
 import random
 import logging
@@ -141,13 +141,13 @@ class VAETrainer:
                         ls_to_plot = random.random()
                         self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
                     else:
-                        self.log_decoder_images(iterations)
+                        self.log_decoder_images(iterations, img_shape=batch_train[1].shape[1:])
 
         t_elapsed = time.time() - t_start
 
         return loss_train, loss_test, t_elapsed
 
-    def log_decoder_images(self, itr: int, plot_mean: bool = True):
+    def log_decoder_images(self, itr: int, img_shape: Tuple, plot_mean: bool = True):
         # FIXME: Merge two logging functions
         decoder = self.model.decoder
         decoder_params = self.state.params["decoder"]
@@ -175,7 +175,7 @@ class VAETrainer:
         for i in range(n):
             row = int(i / 3)
             cols = int(i % 3)
-            ax[row][cols].imshow(out[i, :].reshape((32, 32)), vmin=self.vmin, vmax=self.vmax)
+            ax[row][cols].imshow(out[i, :].reshape(img_shape), vmin=self.vmin, vmax=self.vmax)
 
         wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
         plt.close()
