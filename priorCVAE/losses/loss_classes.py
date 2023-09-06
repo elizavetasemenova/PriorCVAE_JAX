@@ -195,3 +195,53 @@ class SumPixelAndKL(Loss):
         loss = pixel_loss + kld_loss
         self.step_increase_parameter()
         return loss, {"KLD": kld_loss, "Pixel Loss": pixel_loss}
+
+
+class BinaryCrossEntropyAndKL(Loss):
+    """
+    Loss function with binary cross-entropy loss and KL.
+    """
+
+    def __init__(self, conditional: bool = False):
+        """
+        Initialize the BinaryCrossEntropyAndKL loss.
+
+        :param conditional:
+        """
+        super().__init__(conditional)
+        self.kl_scale = 1
+        self.itr = 0
+
+    def step_increase_parameter(self):
+        """
+        Using predefined steps
+        After every 500 iterations add 0.1
+        """
+        self.itr = self.itr + 1
+        if int(self.itr % 500) == 0:
+            self.kl_scale = min(self.kl_scale + 0.1, 0.)
+
+    @partial(jax.jit, static_argnames=['self'])
+    def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
+                 z_rng: KeyArray) -> [jnp.ndarray, dict]:
+        """
+        Calculates the loss value.
+
+        :param state_params: Current state parameters of the model.
+        :param state: Current state of the model.
+        :param batch: Current batch of the data. It is list of [x, y, c] values.
+        :param z_rng: a PRNG key used as the random key.
+        """
+        _, y, ls = batch
+        c = ls if self.conditional else None
+        y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
+
+        # BCE loss
+        y_hat = nn.sigmoid(y_hat)
+        bce_loss = y * jnp.log(y_hat + 1e-4) + (1 - y) * jnp.log(1 - y_hat + 1e-4)
+        bce_loss = jnp.mean(-1 * bce_loss)
+
+        kld_loss = self.kl_scale * kl_divergence(z_mu, z_logvar)
+        loss = bce_loss + kld_loss
+        self.step_increase_parameter()
+        return loss, {"KLD": kld_loss, "BCE Loss": bce_loss}

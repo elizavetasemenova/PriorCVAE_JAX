@@ -42,6 +42,10 @@ def run_experiment(cfg: DictConfig):
     if cfg.normalize_data:
         last_t_data = normalize_data(last_t_data)
 
+    if cfg.binarize_data:
+        last_t_data = last_t_data.at[jnp.where(last_t_data < 0.5)].set(0)
+        last_t_data = last_t_data.at[jnp.where(last_t_data >= 0.5)].set(1)
+
     last_t_data = last_t_data.reshape((-1, 32, 32, 1))
 
     # FIXME: Split shouldn't happen here

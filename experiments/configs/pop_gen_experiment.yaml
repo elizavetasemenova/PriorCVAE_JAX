@@ -36,3 +36,4 @@ load_model_path: ""
 vmin: 0
 vmax: 1
 normalize_data: True
+binarize_data: False

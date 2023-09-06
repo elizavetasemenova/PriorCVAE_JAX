@@ -7,6 +7,7 @@ from functools import partial
 import random
 import logging
 
+import flax
 import matplotlib.pyplot as plt
 import wandb
 from optax import GradientTransformation
@@ -137,11 +138,12 @@ class VAETrainer:
                         wandb.log({key: val}, step=iterations)
                     wandb.log({"Test Loss": loss_test[-1]}, step=iterations)
 
-                    if test_set[0] is not None:
-                        ls_to_plot = random.random()
-                        self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
-                    else:
-                        self.log_decoder_images(iterations, img_shape=batch_train[1].shape[1:])
+                    if iterations % 50 == 0:
+                        if test_set[0] is not None:
+                            ls_to_plot = random.random()
+                            self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
+                        else:
+                            self.log_decoder_images(iterations, img_shape=batch_train[1].shape[1:])
 
         t_elapsed = time.time() - t_start
 
@@ -170,12 +172,13 @@ class VAETrainer:
         else:
             out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
 
+        # out = flax.linen.sigmoid(out)
         plt.clf()
         fig, ax = plt.subplots(3, 3, figsize=(15, 12))
         for i in range(n):
             row = int(i / 3)
             cols = int(i % 3)
-            ax[row][cols].imshow(out[i, :].reshape(img_shape), vmin=self.vmin, vmax=self.vmax)
+            ax[row][cols].imshow(out[i, :].reshape(img_shape), vmin=self.vmin, vmax=self.vmax, cmap="gray")
 
         wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
         plt.close()
