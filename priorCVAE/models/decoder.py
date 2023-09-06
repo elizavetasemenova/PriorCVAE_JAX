@@ -103,6 +103,7 @@ class CNNDecoder(Decoder):
     conv_stride: Union[int, Tuple[int]] = 2
     conv_kernel_size: Union[Tuple[Tuple[int]], Tuple[int]] = (3, 3)
     activations: Union[Tuple, PjitFunction] = nn.sigmoid
+    last_layer_activation: PjitFunction = None
 
     @nn.compact
     def __call__(self, y: jnp.ndarray) -> (jnp.ndarray, jnp.ndarray):
@@ -113,8 +114,8 @@ class CNNDecoder(Decoder):
         activations = [self.activations] * len(hidden_dims) if not isinstance(self.activations,
                                                                               Tuple) else self.activations
 
-        conv_activation = [self.conv_activation] * len(self.conv_features) if not isinstance(self.conv_activation,
-                                                                                             Tuple) else self.conv_activation
+        conv_activation = [self.conv_activation] * (len(self.conv_features) - 1) if not isinstance(self.conv_activation,
+                                                                                                   Tuple) else self.conv_activation
         conv_stride = [self.conv_stride] * len(self.conv_features) if not isinstance(self.conv_stride,
                                                                                      Tuple) else self.conv_stride
         conv_kernel_size = [self.conv_kernel_size] * len(self.conv_features) if not isinstance(
@@ -130,14 +131,13 @@ class CNNDecoder(Decoder):
         y = activations[-1](y)  # FIXME: should be -1 or new variable?
         y = y.reshape((-1,) + self.decoder_reshape)
 
+        conv_activation.append(self.last_layer_activation)  # Adding last activation, by-default None.
         # Conv layers
         for i, (feat, k_s, stride, activation_fn) in enumerate(
                 zip(self.conv_features, conv_kernel_size, conv_stride, conv_activation)):
-            if i == (len(self.conv_features) - 1):  # no activation for last layer
-                y = nn.ConvTranspose(features=feat, kernel_size=k_s, strides=(stride, stride),
-                                     padding="VALID")(y)
-            else:
-                y = nn.ConvTranspose(features=feat, kernel_size=k_s, strides=(stride, stride), padding="VALID")(y)
+            y = nn.ConvTranspose(features=feat, kernel_size=k_s, strides=(stride, stride),
+                                 padding="VALID")(y)
+            if activation_fn is not None:
                 y = activation_fn(y)
 
         return y

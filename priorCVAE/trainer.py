@@ -172,7 +172,6 @@ class VAETrainer:
         else:
             out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
 
-        # out = flax.linen.sigmoid(out)
         plt.clf()
         fig, ax = plt.subplots(3, 3, figsize=(15, 12))
         for i in range(n):

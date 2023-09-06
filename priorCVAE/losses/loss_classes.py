@@ -237,7 +237,6 @@ class BinaryCrossEntropyAndKL(Loss):
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
 
         # BCE loss
-        y_hat = nn.sigmoid(y_hat)
         bce_loss = y * jnp.log(y_hat + 1e-4) + (1 - y) * jnp.log(1 - y_hat + 1e-4)
         bce_loss = jnp.mean(-1 * bce_loss)
 
