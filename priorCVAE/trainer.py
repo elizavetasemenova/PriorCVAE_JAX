@@ -177,7 +177,7 @@ class VAETrainer:
         for i in range(n):
             row = int(i / 3)
             cols = int(i % 3)
-            ax[row][cols].imshow(out[i, :].reshape(img_shape), vmin=self.vmin, vmax=self.vmax, cmap="gray")
+            ax[row][cols].imshow(out[i, :].reshape(img_shape), vmin=self.vmin, vmax=self.vmax)
 
         wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
         plt.close()

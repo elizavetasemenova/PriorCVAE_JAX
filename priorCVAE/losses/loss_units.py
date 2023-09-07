@@ -1,6 +1,7 @@
 """
 File contains various loss functions.
 """
+from typing import Union
 import jax
 import jax.numpy as jnp
 from functools import partial
@@ -77,7 +78,8 @@ def mean_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarr
 
 @partial(jax.jit, static_argnames=['kernel', 'efficient_grads', 'biased'])
 def square_maximum_mean_discrepancy(kernel: Kernel, target_samples: jnp.ndarray, prediction_samples: jnp.ndarray,
-                                    efficient_grads: bool = False, biased: bool = False) -> jnp.ndarray:
+                                    efficient_grads: bool = False, biased: bool = False,
+                                    lengthscales: jnp.ndarray = None) -> Union[jnp.ndarray, list]:
     """
     Implementation of Empirical Maximum Mean Discrepancy (MMD).
     For details see lemma 6 of https://jmlr.csail.mit.edu/papers/volume13/gretton12a/gretton12a.pdf
@@ -87,6 +89,7 @@ def square_maximum_mean_discrepancy(kernel: Kernel, target_samples: jnp.ndarray,
     :param prediction_samples: samples from the approximate distribution.
     :param efficient_grads: if True avoid calculating the K(x, x) as the grads through it will be zero.
     :param biased: If True, returns the biased estimate else the unbiased estimate is returned.
+    :param lengthscales: if not None, perform MMD on a list of kernels.
 
     :returns: MMD value.
 
@@ -99,25 +102,35 @@ def square_maximum_mean_discrepancy(kernel: Kernel, target_samples: jnp.ndarray,
     x_n = target_samples.shape[0]
     y_n = prediction_samples.shape[0]
 
-    term_xx = 0
-    if not efficient_grads:
-        K_xx = kernel(target_samples, target_samples)
+    if lengthscales is None:
+        lengthscales = [kernel.lengthscale]
+
+    mmd_val_square = []
+    for l in lengthscales:
+        kernel.lengthscale = l
+        term_xx = 0
+        if not efficient_grads:
+            K_xx = kernel(target_samples, target_samples)
+            if biased:
+                term_xx = (1 / (x_n * x_n)) * jnp.sum(K_xx)
+            else:
+                term_xx = 1 / (x_n * (x_n - 1)) * (jnp.sum(K_xx) - jnp.trace(K_xx))
+
+        K_yy = kernel(prediction_samples, prediction_samples)
+        K_xy = kernel(target_samples, prediction_samples)
+
         if biased:
-            term_xx = (1 / (x_n * x_n)) * jnp.sum(K_xx)
+            term_yy = (1 / (y_n * y_n)) * jnp.sum(K_yy)
         else:
-            term_xx = 1 / (x_n * (x_n - 1)) * (jnp.sum(K_xx) - jnp.trace(K_xx))
+            term_yy = 1 / (y_n * (y_n - 1)) * (jnp.sum(K_yy) - jnp.trace(K_yy))
 
-    K_yy = kernel(prediction_samples, prediction_samples)
-    K_xy = kernel(target_samples, prediction_samples)
+        term_xy = (2 / (x_n * y_n)) * jnp.sum(K_xy)
 
-    if biased:
-        term_yy = (1 / (y_n * y_n)) * jnp.sum(K_yy)
-    else:
-        term_yy = 1 / (y_n * (y_n - 1)) * (jnp.sum(K_yy) - jnp.trace(K_yy))
+        mmd_val_square.append(term_xx + term_yy - term_xy)
 
-    term_xy = (2 / (x_n * y_n)) * jnp.sum(K_xy)
-
-    mmd_val_square = term_xx + term_yy - term_xy
+    if len(mmd_val_square) == 1:
+        return mmd_val_square[0]
+    
     return mmd_val_square
 
 
@@ -149,6 +162,7 @@ def Gaussian_NLL(y: jnp.ndarray, reconstructed_y_m: jnp.ndarray, reconstructed_y
     return -1 * jnp.mean(nll_val, axis=0)
 
 
+@jax.jit
 def square_pixel_sum_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray) -> jnp.ndarray:
     """
     Sum of square error between pixels of an image and a mean over batch.

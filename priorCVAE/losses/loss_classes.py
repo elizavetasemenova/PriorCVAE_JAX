@@ -244,3 +244,66 @@ class BinaryCrossEntropyAndKL(Loss):
         loss = bce_loss + kld_loss
         self.step_increase_parameter()
         return loss, {"KLD": kld_loss, "BCE Loss": bce_loss}
+
+
+class SumMMDAndKL(Loss):
+    """
+    Loss function with sum of RELU-MMD losses and KL.
+    """
+
+    def __init__(self, kernel: Kernel, conditional: bool = False, kl_scaling: float = 1e-6):
+        """
+        Initialize the SumMMDAndKL loss.
+
+        :param kernel: Kernel to use for calculaing MMD.
+        :param conditional: a variable to specify if conditional version is getting trained or not.
+        :param kl_scaling: a float value representing the scaling value for the KL term.
+        """
+        super().__init__(conditional)
+        self.kernel = kernel
+        self.kl_scaling = kl_scaling
+
+    def _sum_mmd(self, y, y_hat):
+        distance = jnp.linalg.norm(y - y_hat, axis=-1)
+        quantile_probs = [.1, .5, .9]
+        quantile_distances = jnp.quantile(distance, jnp.array(quantile_probs))
+        mmd_loss = 0
+        mmd_vals = {}
+
+        sq_mmd_losses = square_maximum_mean_discrepancy(self.kernel, y, y_hat, efficient_grads=True,
+                                                        lengthscales=quantile_distances)
+
+        for i, sq_mmd_loss in enumerate(sq_mmd_losses):
+            # relu_sq_mmd_loss = nn.relu(sq_mmd_loss)  # To avoid negative MMD values
+            # mmd_loss_i = jnp.sqrt(relu_sq_mmd_loss)
+            mmd_vals[f"MMD = {quantile_probs[i]}"] = sq_mmd_loss
+            mmd_loss += sq_mmd_loss
+
+        return mmd_loss, mmd_vals
+
+    @partial(jax.jit, static_argnames=['self'])
+    def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
+                 z_rng: KeyArray) -> [jnp.ndarray, dict]:
+        """
+        Calculates the loss value.
+
+        :param state_params: Current state parameters of the model.
+        :param state: Current state of the model.
+        :param batch: Current batch of the data. It is list of [x, y, c] values.
+        :param z_rng: a PRNG key used as the random key.
+        """
+        _, y, ls = batch
+        c = ls if self.conditional else None
+        y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
+
+        # reconstruction_loss = square_pixel_sum_loss(y, y_hat)
+        # reconstruction_loss = 0
+
+        y = y.reshape((y.shape[0], -1))
+        y_hat = y_hat.reshape((y.shape[0], -1))
+
+        mmd_loss, mmd_vals = self._sum_mmd(y, y_hat)
+
+        kld_loss = self.kl_scaling * kl_divergence(z_mu, z_logvar)
+        loss = mmd_loss + kld_loss  # + reconstruction_loss
+        return loss, {"KLD": kld_loss, "MMD": mmd_loss} | mmd_vals

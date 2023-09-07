@@ -1,0 +1,4 @@
+_target_: priorCVAE.losses.SumMMDAndKL
+conditional: ${conditional}
+kl_scaling: 0.1
+kernel: ${mmd}
