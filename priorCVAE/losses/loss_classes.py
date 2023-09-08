@@ -296,8 +296,8 @@ class SumMMDAndKL(Loss):
         c = ls if self.conditional else None
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
 
-        reconstruction_loss = 0.1 * square_pixel_sum_loss(y, y_hat)
-        # reconstruction_loss = 0
+        # reconstruction_loss = 0.1 * square_pixel_sum_loss(y, y_hat)
+        reconstruction_loss = 0
 
         y = y.reshape((y.shape[0], -1))
         y_hat = y_hat.reshape((y.shape[0], -1))
@@ -306,6 +306,5 @@ class SumMMDAndKL(Loss):
 
         kld_loss = self.kl_scaling * kl_divergence(z_mu, z_logvar)
 
-        # ToDo: check, MMD should be increased
-        loss = -mmd_loss + kld_loss + reconstruction_loss
+        loss = mmd_loss + kld_loss + reconstruction_loss
         return loss, {"KLD": kld_loss, "MMD": mmd_loss, "reconstruction_loss": reconstruction_loss} | mmd_vals
