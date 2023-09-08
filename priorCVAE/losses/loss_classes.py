@@ -270,14 +270,14 @@ class SumMMDAndKL(Loss):
         mmd_loss = 0
         mmd_vals = {}
 
-        sq_mmd_losses = square_maximum_mean_discrepancy(self.kernel, y, y_hat, efficient_grads=True,
+        sq_mmd_losses = square_maximum_mean_discrepancy(self.kernel, y, y_hat, efficient_grads=False,
                                                         lengthscales=quantile_distances)
 
         for i, sq_mmd_loss in enumerate(sq_mmd_losses):
-            # relu_sq_mmd_loss = nn.relu(sq_mmd_loss)  # To avoid negative MMD values
-            # mmd_loss_i = jnp.sqrt(relu_sq_mmd_loss)
-            mmd_vals[f"MMD = {quantile_probs[i]}"] = sq_mmd_loss
-            mmd_loss += sq_mmd_loss
+            relu_sq_mmd_loss = nn.relu(sq_mmd_loss)  # To avoid negative MMD values
+            mmd_loss_i = jnp.sqrt(relu_sq_mmd_loss)
+            mmd_vals[f"MMD = {quantile_probs[i]}"] = mmd_loss_i
+            mmd_loss += mmd_loss_i
 
         return mmd_loss, mmd_vals
 
@@ -296,7 +296,7 @@ class SumMMDAndKL(Loss):
         c = ls if self.conditional else None
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
 
-        # reconstruction_loss = square_pixel_sum_loss(y, y_hat)
+        reconstruction_loss = 0.1 * square_pixel_sum_loss(y, y_hat)
         # reconstruction_loss = 0
 
         y = y.reshape((y.shape[0], -1))
@@ -305,5 +305,7 @@ class SumMMDAndKL(Loss):
         mmd_loss, mmd_vals = self._sum_mmd(y, y_hat)
 
         kld_loss = self.kl_scaling * kl_divergence(z_mu, z_logvar)
-        loss = mmd_loss + kld_loss  # + reconstruction_loss
-        return loss, {"KLD": kld_loss, "MMD": mmd_loss} | mmd_vals
+
+        # ToDo: check, MMD should be increased
+        loss = -mmd_loss + kld_loss + reconstruction_loss
+        return loss, {"KLD": kld_loss, "MMD": mmd_loss, "reconstruction_loss": reconstruction_loss} | mmd_vals
