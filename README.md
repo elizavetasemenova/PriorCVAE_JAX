@@ -31,7 +31,6 @@ To install in the develop mode:
 python setup.py develop
 ```
 
-
 ## Examples
 
 Example notebooks can be found in the `examples\` directory. Remember to install the priorCVAE package before running the notebooks.
@@ -65,3 +64,11 @@ pytest -v tests/
 | Project | Description | Publication | Uses current library |
 | --- | --- | --- | --- |
 | [aggVAE](https://github.com/MLGlobalHealth/aggVAE) | "Deep learning and MCMC with aggVAE for shifting administrative boundaries: mapping malaria prevalence in Kenya", Elizaveta Semenova, Swapnil Mishra, Samir Bhatt, Seth Flaxman, Juliette Unwin | [arvix](https://arxiv.org/pdf/2305.19779.pdf) Accepted to the "Epistemic Uncertainty in Artificial Intelligence" workshop of the "Uncertainty in Artificial Intelligence (UAI 2023)" conference.| no
+
+### Contributing
+
+For all correspondence, please contact [elizaveta.semenova@cs.ox.ac.uk](mailto:elizaveta.semenova@cs.ox.ac.uk).
+
+### License
+
+This software is provided under the [MIT license](LICENSE).
