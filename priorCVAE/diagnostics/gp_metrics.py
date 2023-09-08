@@ -15,6 +15,7 @@ def frobenius_norm_of_diff(mat1: jnp.ndarray, mat2: jnp.ndarray):
     norm = jnp.linalg.norm(diff)
     return norm
 
+
 @jax.jit
 def sample_covariance(samples: jnp.ndarray) -> jnp.ndarray:
     """
