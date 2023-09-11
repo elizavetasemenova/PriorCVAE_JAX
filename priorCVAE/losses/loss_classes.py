@@ -262,8 +262,9 @@ class SumMMDAndKL(Loss):
         super().__init__(conditional)
         self.kernel = kernel
         self.kl_scaling = kl_scaling
+        self.reconstruction_loss_scale = 0.01
 
-    def _sum_mmd(self, y, y_hat):
+    def _sum_sq_mmd(self, y, y_hat):
         distance = jnp.linalg.norm(y - y_hat, axis=-1)
         quantile_probs = [.1, .5, .9]
         quantile_distances = jnp.quantile(distance, jnp.array(quantile_probs))
@@ -274,10 +275,9 @@ class SumMMDAndKL(Loss):
                                                         lengthscales=quantile_distances)
 
         for i, sq_mmd_loss in enumerate(sq_mmd_losses):
-            relu_sq_mmd_loss = nn.relu(sq_mmd_loss)  # To avoid negative MMD values
-            mmd_loss_i = jnp.sqrt(relu_sq_mmd_loss)
-            mmd_vals[f"MMD = {quantile_probs[i]}"] = mmd_loss_i
-            mmd_loss += mmd_loss_i
+            # sq_mmd_loss = nn.relu(sq_mmd_loss)
+            mmd_vals[f"MMD = {quantile_probs[i]}"] = sq_mmd_loss
+            mmd_loss += sq_mmd_loss
 
         return mmd_loss, mmd_vals
 
@@ -296,15 +296,14 @@ class SumMMDAndKL(Loss):
         c = ls if self.conditional else None
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
 
-        # reconstruction_loss = 0.1 * square_pixel_sum_loss(y, y_hat)
-        reconstruction_loss = 0
+        reconstruction_loss = self.reconstruction_loss_scale * square_pixel_sum_loss(y, y_hat)
 
         y = y.reshape((y.shape[0], -1))
         y_hat = y_hat.reshape((y.shape[0], -1))
 
-        mmd_loss, mmd_vals = self._sum_mmd(y, y_hat)
+        sq_mmd_loss, sq_mmd_vals = self._sum_sq_mmd(y, y_hat)
 
         kld_loss = self.kl_scaling * kl_divergence(z_mu, z_logvar)
 
-        loss = mmd_loss + kld_loss + reconstruction_loss
-        return loss, {"KLD": kld_loss, "MMD": mmd_loss, "reconstruction_loss": reconstruction_loss} | mmd_vals
+        loss = sq_mmd_loss + kld_loss + reconstruction_loss
+        return loss, {"KLD": kld_loss, "MMD": sq_mmd_loss, "reconstruction_loss": reconstruction_loss} | sq_mmd_vals

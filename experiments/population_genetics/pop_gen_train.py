@@ -14,7 +14,6 @@ from hydra.utils import instantiate
 import jax.config as config
 import flax.linen as nn
 
-from priorCVAE.losses import BinaryCrossEntropyAndKL
 from priorCVAE.utility import save_model_params, load_model_params
 from experiments.exp_utils import get_hydra_output_dir, setup_wandb, move_wandb_hydra_files
 from pop_gen_utility import read_csv_data, split_data_into_time_batches, plot_decoder_samples, normalize_data
@@ -74,7 +73,7 @@ def run_experiment(cfg: DictConfig):
     optimizer = instantiate(cfg.optimizer)
     loss = instantiate(cfg.loss)
 
-    if isinstance(loss, BinaryCrossEntropyAndKL):
+    if cfg.last_layer_sigmoid:
         decoder.last_layer_activation = nn.sigmoid
 
     trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, vmin=cfg.vmin, vmax=cfg.vmax)
@@ -83,7 +82,7 @@ def run_experiment(cfg: DictConfig):
     if cfg.load_model_path != "":
         params = load_model_params(cfg.load_model_path)
 
-    trainer.init_params(last_t_data[:2], params=params)
+    trainer.init_params(last_t_data[:1], params=params)
 
     test_set = (None, test_data, None)
     log.info(f"Starting training...")
