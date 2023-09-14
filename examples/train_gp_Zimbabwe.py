@@ -19,19 +19,44 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 config.update("jax_enable_x64", True)
 
-n_data = 100
-x0 = 0
+import geopandas as gpd
+
+
 batch_size = 1000
-x1 = 1
 conditional = True
 iterations = 100
 output_dir = "output/plots"
+
+# read Zimbabwe data
+s = gpd.read_file("data/Zimbabwe_adm2/shapefile.shp")
+s['area_id'] = s.index + 1
+s = s[['area_id', 'geometry']]
+print(s.head)
+s["centroid"] = s["geometry"].centroid
+#temp_centroids = s["geometry"].to_crs("EPSG:32735").centroid
+temp_centroids = s["geometry"].centroid
+centroids = gpd.GeoDataFrame()
+centroids["x"] = temp_centroids.geometry.apply(lambda x: x.x)
+centroids["y"] = temp_centroids.geometry.apply(lambda x: x.y)
+x_coords = jnp.array(centroids["x"])
+y_coords = jnp.array(centroids["y"])
+coords = jnp.dstack((x_coords, y_coords))[0]
+x = coords
+print(x.shape)
+
+
+
+if output_dir != "":
+        plt.savefig(os.path.join(output_dir, "lengthscale_histogram.png"))
+
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir) 
 
 
 def plot_gp_samples(x, y, lengthscale, n: int = 15, output_dir: str = ""):
+    # ToDo: sibtitute this with plots of priors over Zimbabwe - see here 
+    # https://github.com/elizavetasemenova/PriorVAE/blob/main/CAR_Zimbabwe.ipynb
     fig, ax = plt.subplots(figsize=(4, 3))
     for i in range(n):
         if lengthscale[i] <= 0.2:
@@ -67,6 +92,8 @@ def plot_lengthscales(train_lengthscale, test_lengthscale, output_dir: str = "")
 
 def plot_decoder_samples(decoder, decoder_params, ls, latent_dim, x_val, n: int = 15, output_dir: str = "",
                          conditional: bool = True, plot_mean: bool = True):
+    # ToDo: sibtitute this with plots of priors over Zimbabwe - see here 
+    # https://github.com/elizavetasemenova/PriorVAE/blob/main/CAR_Zimbabwe.ipynb
     key = jax.random.PRNGKey(random.randint(0, 9999))
     rng, z_rng, init_rng = jax.random.split(key, 3)
     z = jax.random.normal(z_rng, (n, latent_dim))
@@ -97,24 +124,24 @@ def plot_decoder_samples(decoder, decoder_params, ls, latent_dim, x_val, n: int 
     plt.show()
 
 
-def generate_data():
-    x = create_grid(n_data=n_data, lim_low=x0, lim_high=x1, dim=1)
+def generate_data(x):
+    #x = create_grid(n_data=n_data, lim_low=x0, lim_high=x1, dim=1)
     data_generator = GPDataset(kernel=SquaredExponential(), x=x, sample_lengthscale=True,
-                               lengthscale_prior=None)
+                               lengthscale_prior=npdist.Gamma(2,4))
     return data_generator
 
 
 if __name__ == '__main__':
 
     log.info(f"---------------------------------------------")
-    log.info(f"Experiment to encode GP prior started...")
+    log.info(f"Experiment to encode GP prior for Zimbabwe started...")
     log.info(f"---------------------------------------------")
 
-    data_generator = generate_data()
+    data_generator = generate_data(x)
     batch_x_train, batch_y_train, batch_ls_train = data_generator.simulatedata(n_samples=batch_size)
     x_test, y_test, ls_test = data_generator.simulatedata(n_samples=batch_size)
 
-    plot_gp_samples(batch_x_train, batch_y_train, batch_ls_train, output_dir=output_dir)
+    #plot_gp_samples(batch_x_train, batch_y_train, batch_ls_train, output_dir=output_dir)
     plot_lengthscales(batch_ls_train, ls_test, output_dir=output_dir)
 
     log.info(f"Data generator initialized...")
@@ -152,9 +179,10 @@ if __name__ == '__main__':
     log.info(f"---------------------------------------------")
 
     trained_decoder_params = trainer.state.params["decoder"]
-    plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=.5,
-                         latent_dim=30, x_val=x_test[0], n=15,
-                         conditional=conditional, output_dir=output_dir)
+    # ToDo: make meaningful plots here, e.g. 'diagonal'
+    #plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=.5,
+    #                     latent_dim=30, x_val=x_test[0], n=15,
+    #                     conditional=conditional, output_dir=output_dir)
 
     # Plotting loss
     plt.plot(train_loss)
