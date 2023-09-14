@@ -5,9 +5,10 @@ import os
 import jax
 import jax.numpy as jnp
 import random
+import numpyro.distributions as npdist
 
 from priorCVAE.models import MLPDecoder, MLPEncoder, VAE
-from priorCVAE.utility import create_grid
+from priorCVAE.utility import create_grid, save_model_params
 from priorCVAE.datasets import GPDataset
 from priorCVAE.priors import SquaredExponential
 from priorCVAE.trainer import VAETrainer
@@ -24,6 +25,7 @@ batch_size = 1000
 x1 = 1
 conditional = True
 iterations = 100
+output_dir = ""
 
 
 def plot_gp_samples(x, y, lengthscale, n: int = 15, output_dir: str = ""):
@@ -94,7 +96,8 @@ def plot_decoder_samples(decoder, decoder_params, ls, latent_dim, x_val, n: int 
 
 def generate_data():
     x = create_grid(n_data=n_data, lim_low=x0, lim_high=x1, dim=1)
-    data_generator = GPDataset(kernel=SquaredExponential(), x=x, sample_lengthscale=True)
+    data_generator = GPDataset(kernel=SquaredExponential(), x=x, sample_lengthscale=True,
+                               lengthscale_prior=None)
     return data_generator
 
 
@@ -108,8 +111,8 @@ if __name__ == '__main__':
     batch_x_train, batch_y_train, batch_ls_train = data_generator.simulatedata(n_samples=batch_size)
     x_test, y_test, ls_test = data_generator.simulatedata(n_samples=batch_size)
 
-    plot_gp_samples(batch_x_train, batch_y_train, batch_ls_train)
-    plot_lengthscales(batch_ls_train, ls_test)
+    plot_gp_samples(batch_x_train, batch_y_train, batch_ls_train, output_dir=output_dir)
+    plot_lengthscales(batch_ls_train, ls_test, output_dir=output_dir)
 
     log.info(f"Data generator initialized...")
     log.info(f"---------------------------------------------")
@@ -148,4 +151,21 @@ if __name__ == '__main__':
     trained_decoder_params = trainer.state.params["decoder"]
     plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=.5,
                          latent_dim=30, x_val=x_test[0], n=15,
-                         conditional=conditional)
+                         conditional=conditional, output_dir=output_dir)
+
+    # Plotting loss
+    plt.plot(train_loss)
+    plt.title("Train Loss")
+    if output_dir != "":
+        plt.savefig(os.path.join(output_dir, "train_loss.png"))
+    plt.show()
+
+    plt.plot(test_loss)
+    plt.title("Test Loss")
+    if output_dir != "":
+        plt.savefig(os.path.join(output_dir, "test_loss.png"))
+    plt.show()
+
+    # Save model
+    if output_dir != "":
+        save_model_params(os.path.join(output_dir, "model"), trainer.state.params)
