@@ -19,10 +19,12 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 config.update("jax_enable_x64", True)
 
+# inputs to create data
 n_data = 100
 x0 = 0
-batch_size = 1000
 x1 = 1
+
+batch_size = 1000
 conditional = True
 iterations = 100
 output_dir = ""
