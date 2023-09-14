@@ -262,7 +262,7 @@ class SumMMDAndKL(Loss):
         super().__init__(conditional)
         self.kernel = kernel
         self.kl_scaling = kl_scaling
-        self.reconstruction_loss_scale = 0.01
+        self.reconstruction_loss_scale = 0.1
 
     def _sum_sq_mmd(self, y, y_hat):
         distance = jnp.linalg.norm(y - y_hat, axis=-1)
