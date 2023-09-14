@@ -25,7 +25,10 @@ batch_size = 1000
 x1 = 1
 conditional = True
 iterations = 100
-output_dir = ""
+output_dir = "output/plots"
+
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir) 
 
 
 def plot_gp_samples(x, y, lengthscale, n: int = 15, output_dir: str = ""):

@@ -18,7 +18,7 @@ class GPDataset:
 
     """
 
-    def __init__(self, kernel: Kernel, x: jnp.ndarray, sample_lengthscale: bool = False):
+    def __init__(self, kernel: Kernel, x: jnp.ndarray, sample_lengthscale: bool = False, lengthscale_prior=None):
         """
         Initialize the Gaussian Process dataset class.
 
@@ -29,6 +29,7 @@ class GPDataset:
         self.sample_lengthscale = sample_lengthscale
         self.kernel = kernel
         self.x = x
+        self.lengthscale_prior = lengthscale_prior
 
     def simulatedata(self, n_samples: int = 10000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """
@@ -45,7 +46,7 @@ class GPDataset:
 
         gp_predictive = Predictive(GP, num_samples=n_samples)
         all_draws = gp_predictive(rng_key, x=self.x, kernel=self.kernel, jitter=1e-5,
-                                  sample_lengthscale=self.sample_lengthscale)
+                                  sample_lengthscale=self.sample_lengthscale, lengthscale_prior=self.lengthscale_prior)
 
         ls_draws = jnp.array(all_draws['ls'])
         gp_draws = jnp.array(all_draws['y'])
