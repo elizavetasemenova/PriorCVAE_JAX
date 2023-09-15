@@ -30,3 +30,4 @@ plot_ls: 0.3
 wandb:
   username: null
   project: "PriorCVAE"
+  tags: ["Offline GP Prior"]

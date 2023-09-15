@@ -106,7 +106,7 @@ def setup_wandb(cfg):
         cfg, resolve=True, throw_on_missing=True
     )
 
-    wandb.init(project=cfg.wandb.project, entity=cfg.wandb.username, config=wandb_cfg)
+    wandb.init(project=cfg.wandb.project, entity=cfg.wandb.username, config=wandb_cfg, tags=cfg.wandb.tags)
 
 
 def move_wandb_hydra_files(output_dir: str) -> str:

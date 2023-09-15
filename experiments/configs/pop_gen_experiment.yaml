@@ -28,6 +28,7 @@ debug: True
 wandb:
   username: null
   project: "PriorCVAE"
+  tags: ["Pop Gen"]
 
 conditional: False
 
