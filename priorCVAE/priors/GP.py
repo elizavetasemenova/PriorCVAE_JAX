@@ -9,7 +9,8 @@ from priorCVAE.priors import Kernel, SquaredExponential
 
 
 def GP(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter: float = 1e-5, y=None, noise: bool = False,
-       sample_lengthscale: bool = False, lengthscale_options: jnp.ndarray = None):
+       sample_lengthscale: bool = False, lengthscale_options: jnp.ndarray = None,
+       lengthscale_prior: npdist.Distribution = npdist.Uniform(0.01, 0.99)):
     """
     Gaussian process numpyro primitive to generate samples from it.
 
@@ -19,13 +20,15 @@ def GP(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter: float = 1e
     :param y: observations.
     :param noise: if True, add noise to the sample. The noise is drawn from the half-normal distribution with
                   variance of 0.1.
-    :param sample_lengthscale: if True, sample lenthscale from a Uniform distribution, U(0.01, 0.99).
+    :param sample_lengthscale: if True, sample lenthscale.
     :param lengthscale_options: a jnp.ndarray of lengthscale options to choose from.
+    :param lengthscale_prior: a npdist distribution to sample the legnthscale from. Defaults to a
+                              Uniform distribution, U(0.01, 0.99).
     """
 
     if sample_lengthscale:
         if lengthscale_options is None:
-            kernel.lengthscale = numpyro.sample("lengthscale", npdist.Uniform(0.01, 0.99))
+            kernel.lengthscale = numpyro.sample("lengthscale", lengthscale_prior)
         else:
             idx = numpyro.sample("lengthscale", npdist.discrete.DiscreteUniform(0, lengthscale_options.shape[0] - 1))
             kernel.lengthscale = lengthscale_options[idx]

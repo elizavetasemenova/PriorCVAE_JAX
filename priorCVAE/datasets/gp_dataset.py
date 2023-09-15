@@ -9,6 +9,7 @@ import jax.numpy as jnp
 from jax import random
 from numpyro.infer import Predictive
 from omegaconf import ListConfig
+import numpyro.distributions as npdist
 
 from priorCVAE.priors import GP, Kernel
 
@@ -20,7 +21,8 @@ class GPDataset:
     """
 
     def __init__(self, kernel: Kernel, x: jnp.ndarray, sample_lengthscale: bool = False,
-                 lengthscale_options: Union[List, jnp.ndarray] = None):
+                 lengthscale_options: Union[List, jnp.ndarray] = None,
+                 lengthscale_prior: npdist.Distribution = npdist.Uniform(0.01, 0.99)):
         """
         Initialize the Gaussian Process dataset class.
 
@@ -28,6 +30,8 @@ class GPDataset:
         :param sample_lengthscale: whether to sample lengthscale for the kernel or not. Defaults to False.
         :param x: jax.numpy.ndarray of the x grid used to generate sample from the GP.
         :param lengthscale_options: a list or jnp.ndarray of lengthscale options to choose from.
+        :param lengthscale_prior: a npdist distribution to sample the legnthscale from. Defaults to a
+                              Uniform distribution, U(0.01, 0.99).
         """
         self.sample_lengthscale = sample_lengthscale
         self.kernel = kernel
@@ -35,6 +39,7 @@ class GPDataset:
         if isinstance(lengthscale_options, ListConfig):
             lengthscale_options = jnp.array(lengthscale_options)
         self.lengthscale_options = lengthscale_options
+        self.lengthscale_prior = lengthscale_prior
 
     def simulatedata(self, n_samples: int = 10000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """
@@ -52,7 +57,8 @@ class GPDataset:
         gp_predictive = Predictive(GP, num_samples=n_samples)
         all_draws = gp_predictive(rng_key, x=self.x, kernel=self.kernel, jitter=1e-5,
                                   sample_lengthscale=self.sample_lengthscale,
-                                  lengthscale_options=self.lengthscale_options)
+                                  lengthscale_options=self.lengthscale_options,
+                                  lengthscale_prior=self.lengthscale_prior)
 
         ls_draws = jnp.array(all_draws['ls'])
         gp_draws = jnp.array(all_draws['y'])
