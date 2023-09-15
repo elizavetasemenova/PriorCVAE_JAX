@@ -22,6 +22,7 @@ vae_var: 1.0
 debug: True
 
 plot_ls: 0.3
+kl_scaling: 0.5
 
 wandb:
   username: null

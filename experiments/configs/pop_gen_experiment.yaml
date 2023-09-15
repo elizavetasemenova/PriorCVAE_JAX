@@ -39,3 +39,4 @@ vmax: 1
 normalize_data: False
 binarize_data: False
 last_layer_sigmoid: False
+kl_scaling: 0.5
