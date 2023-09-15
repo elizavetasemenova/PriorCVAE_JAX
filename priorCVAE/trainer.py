@@ -7,7 +7,6 @@ from functools import partial
 import random
 import logging
 
-import flax
 import matplotlib.pyplot as plt
 import wandb
 from optax import GradientTransformation
@@ -141,7 +140,9 @@ class VAETrainer:
                     if iterations % 50 == 0:
                         if test_set[0] is not None:
                             ls_to_plot = random.random()
-                            self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
+                            # FIXME
+                            # self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
+                            self.log_statistics(ls=ls_to_plot, data_generator=data_generator, itr=iterations)
                         else:
                             self.log_decoder_images(iterations, img_shape=batch_train[1].shape[1:])
 
@@ -180,6 +181,52 @@ class VAETrainer:
             ax[row][cols].imshow(out[i, :].reshape(img_shape), vmin=self.vmin, vmax=self.vmax)
 
         wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
+        plt.close()
+
+    def log_statistics(self, data_generator, ls: float, itr: int):
+        """
+        ToDo: Only for Zimbabwe
+        """
+        conditional = self.loss_fn.conditional
+        _, gp_samples, _ = data_generator.simulatedata(n_samples=1000)
+        key = jax.random.PRNGKey(random.randint(0, 9999))
+        rng, z_rng, init_rng = jax.random.split(key, 3)
+        z = jax.random.normal(z_rng, (1000, self.model.encoder.latent_dim))
+        if conditional:
+            c = ls * jnp.ones((z.shape[0], 1))
+            z = jnp.concatenate([z, c], axis=-1)
+        decoder = self.model.decoder
+        decoder_params = self.state.params["decoder"]
+        vae_samples = decoder.apply({'params': decoder_params}, z)
+
+        gp_samples_mean = jnp.mean(gp_samples, axis=0)
+        gp_draws_25, gp_draws_75 = jnp.quantile(gp_samples, jnp.array([.25, .75]), axis=0)
+
+        vae_samples_mean = jnp.mean(vae_samples, axis=0)
+        vae_draws_25, vae_draws_75 = jnp.quantile(vae_samples, jnp.array([.25, .75]), axis=0)
+
+        plt.scatter(jnp.arange(len(gp_samples_mean)), gp_samples_mean)
+        plt.scatter(jnp.arange(len(vae_samples_mean)), vae_samples_mean, color="red")
+
+        plt.vlines(x=jnp.arange(len(gp_draws_25)),
+                   ymin=gp_draws_25,
+                   ymax=gp_draws_75,
+                   color="dodgerblue",
+                   label="GP",
+                   linewidth=0.8)
+
+        plt.vlines(x=jnp.arange(len(vae_draws_25)),
+                   ymin=vae_draws_25,
+                   ymax=vae_draws_75,
+                   color="red",
+                   label="VAE",
+                   linewidth=1.1)
+        plt.legend()
+        plt.ylim([-1, 1])
+
+        if wandb.run:
+            wandb.log({f"Samples (ls={ls})": wandb.Image(plt)}, step=itr)
+
         plt.close()
 
     def log_decoder_samples(self, ls: float, x_val: jnp.ndarray, itr: int, plot_mean: bool = True):

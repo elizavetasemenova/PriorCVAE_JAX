@@ -1,5 +1,6 @@
 import random
 
+import wandb
 import jax
 import jax.numpy as jnp
 import geopandas as gpd
@@ -36,9 +37,12 @@ def plot_prior_samples(data_frame: gpd.GeoDataFrame, y, n: int = 5, output_dir: 
         s_plot.plot(column=nm, ax=axs[i], legend=True)
         axs[i].set_title('Prior' + str(i))
 
-    plt.ylim([-2.5, 2.5])
     if output_dir != "":
         plt.savefig(f"{output_dir}/prior_samples.png")
+
+    if wandb.run:
+        wandb.log({"Prior Samples": wandb.Image(plt)})
+
     plt.show()
 
 
@@ -74,6 +78,9 @@ def plot_decoder_samples(data_frame: gpd.GeoDataFrame, decoder, decoder_params, 
     if output_dir != "":
         plt.savefig(f"{output_dir}/decoder_samples.png")
 
+    if wandb.run:
+        wandb.log({"Decoder Samples": wandb.Image(plt)})
+
     plt.show()
 
 
@@ -105,4 +112,8 @@ def plot_statistics(gp_samples: jnp.ndarray, vae_samples: jnp.ndarray, output_di
     plt.ylim([-1, 1])
     if output_dir != "":
         plt.savefig(f"{output_dir}/statistics.png")
+
+    if wandb.run:
+        wandb.log({"Statistics": wandb.Image(plt)})
+
     plt.show()
