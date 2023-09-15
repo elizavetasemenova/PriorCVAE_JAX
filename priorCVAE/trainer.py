@@ -34,7 +34,7 @@ class VAETrainer:
         self.state = None
         self.loss_fn = loss
 
-    def init_params(self, y: jnp.ndarray, c: jnp.ndarray = None, key: KeyArray = None):
+    def init_params(self, y: jnp.ndarray = None, c: jnp.ndarray = None, key: KeyArray = None, params = None):
         """
         Initialize the parameters of the model.
 
@@ -46,7 +46,8 @@ class VAETrainer:
             key = jax.random.PRNGKey(random.randint(0, 9999))
         key, rng = jax.random.split(key, 2)
 
-        params = self.model.init(rng, y, key, c)['params']
+        if params is None:
+            params = self.model.init(rng, y, key, c)['params']
         self.state = train_state.TrainState.create(apply_fn=self.model.apply, params=params, tx=self.optimizer)
 
     @partial(jax.jit, static_argnames=['self'])

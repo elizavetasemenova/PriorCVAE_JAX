@@ -19,12 +19,17 @@ def kl_divergence(mean: jnp.ndarray, logvar: jnp.ndarray) -> jnp.ndarray:
 
     Detailed derivation can be found here: https://learnopencv.com/variational-autoencoder-in-tensorflow/
 
-    :param mean: the mean of the Gaussian distribution with shape (N,).
-    :param logvar: the log-variance of the Gaussian distribution with shape (N,) i.e. only diagonal values considered.
+    :param mean: the mean of the Gaussian distribution with shape (B, D).
+    :param logvar: the log-variance of the Gaussian distribution with shape (B, D) i.e. only diagonal values considered.
 
     :return: the KL divergence value.
+
+    Note: We mean over the batch values.
     """
-    return -0.5 * jnp.sum(1 + logvar - jnp.square(mean) - jnp.exp(logvar))
+    assert len(mean.shape) == len(logvar.shape) == 2
+    assert mean.shape == logvar.shape
+
+    return jnp.mean(-0.5 * jnp.sum(1 + logvar - jnp.square(mean) - jnp.exp(logvar), axis=-1), axis=0)
 
 
 @jax.jit
@@ -38,14 +43,17 @@ def scaled_sum_squared_loss(y: jnp.ndarray, reconstructed_y: jnp.ndarray, vae_va
 
     -1 * log N (y | y', sigma) \approx -0.5 ((y - y'/sigma)^2)
 
-    :param y: the ground-truth value of y with shape (N, D).
-    :param reconstructed_y: the reconstructed value of y with shape (N, D).
+    :param y: the ground-truth value of y with shape (B, D).
+    :param reconstructed_y: the reconstructed value of y with shape (B, D).
     :param vae_var: a float value representing the varianc of the VAE.
 
     :returns: the loss value
+
+    Note: We mean over the batch values.
     """
+    assert len(y.shape) == len(reconstructed_y.shape) == 2
     assert y.shape == reconstructed_y.shape
-    return 0.5 * jnp.sum((reconstructed_y - y) ** 2 / vae_var)
+    return jnp.mean(0.5 * jnp.sum((reconstructed_y - y) ** 2 / vae_var, axis=-1), 0)
 
 
 @jax.jit
