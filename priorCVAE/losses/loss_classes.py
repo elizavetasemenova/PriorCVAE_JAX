@@ -298,7 +298,7 @@ class SumMMDAndKL(Loss):
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
 
         # ToDo: Maybe pass which function to use as a parameter
-        if len(y_hat) == 4:
+        if len(y_hat.shape) == 4:
             reconstruction_loss = square_pixel_sum_loss(y, y_hat)
         else:
             reconstruction_loss = scaled_sum_squared_loss(y, y_hat)
