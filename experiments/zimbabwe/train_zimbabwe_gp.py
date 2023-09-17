@@ -36,7 +36,7 @@ def run_experiment(cfg: DictConfig):
 
     # Data generator
     x, data_frame = read_data(cfg.data_shp_path)
-    data_generator = instantiate(cfg.data_generator)(x=x, lengthscale_prior=numpyro.distributions.Gamma(2, 4))
+    data_generator = instantiate(cfg.data_generator)(x=x, lengthscale_prior=numpyro.distributions.Gamma(4, 2))
     batch_x_train, batch_y_train, batch_ls_train = data_generator.simulatedata(n_samples=cfg.batch_size)
     x_test, y_test, ls_test = data_generator.simulatedata(n_samples=cfg.batch_size)
     log.info(f"Data generator initialized...")

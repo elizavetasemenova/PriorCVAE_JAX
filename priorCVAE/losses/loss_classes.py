@@ -219,7 +219,7 @@ class BinaryCrossEntropyAndKL(Loss):
         """
         self.itr = self.itr + 1
         if int(self.itr % 500) == 0:
-            self.kl_scale = min(self.kl_scale + 0.1, 0.)
+            self.kl_scale = min(self.kl_scale + 0.1, 1.)
 
     @partial(jax.jit, static_argnames=['self'])
     def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
@@ -264,6 +264,7 @@ class SumMMDAndKL(Loss):
         self.kernel = kernel
         self.kl_scaling = kl_scaling
         self.reconstruction_loss_scale = reconstruction_scaling
+        self.itr = 0
 
     def _sum_sq_mmd(self, y, y_hat):
         distance = jnp.linalg.norm(y - y_hat, axis=-1)
@@ -281,6 +282,16 @@ class SumMMDAndKL(Loss):
             mmd_loss += sq_mmd_loss
 
         return mmd_loss, mmd_vals
+
+    def step_increase_parameter(self):
+        """
+        Using predefined steps
+        After every 500 iterations add 0.1
+        """
+        self.itr = self.itr + 1
+        if int(self.itr % 500) == 0:
+            self.kl_scaling = min(self.kl_scaling + 0.1, 1.)
+            self.reconstruction_loss_scale = min(self.reconstruction_loss_scale + 0.1, 1.)
 
     @partial(jax.jit, static_argnames=['self'])
     def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
@@ -311,4 +322,5 @@ class SumMMDAndKL(Loss):
         kld_loss = kl_divergence(z_mu, z_logvar)
 
         loss = sq_mmd_loss + kld_loss + self.kl_scaling * self.reconstruction_loss_scale * reconstruction_loss
+        self.step_increase_parameter()
         return loss, {"KLD": kld_loss, "MMD^2": sq_mmd_loss, "reconstruction_loss": reconstruction_loss} | sq_mmd_vals
