@@ -7,6 +7,7 @@ from functools import partial
 import random
 import logging
 
+import numpyro
 import matplotlib.pyplot as plt
 import wandb
 from optax import GradientTransformation
@@ -142,7 +143,7 @@ class VAETrainer:
                             ls_to_plot = random.random()
                             # FIXME
                             # self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
-                            self.log_statistics(ls=ls_to_plot, data_generator=data_generator, itr=iterations)
+                            self.log_statistics(data_generator=data_generator, itr=iterations)
                         else:
                             self.log_decoder_images(iterations, img_shape=batch_train[1].shape[1:])
 
@@ -183,12 +184,22 @@ class VAETrainer:
         wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
         plt.close()
 
-    def log_statistics(self, data_generator, ls: float, itr: int):
+    def log_statistics(self, data_generator, itr: int):
         """
         ToDo: Only for Zimbabwe
         """
+        # Sample ls
+        a = numpyro.distributions.Gamma(4, 2)
+        key = jax.random.PRNGKey(random.randint(0, 9999))
+        _, z_rng = jax.random.split(key, 2)
+        ls = a.sample(z_rng, (1,))
+
         conditional = self.loss_fn.conditional
-        _, gp_samples, _ = data_generator.simulatedata(n_samples=1000)
+        data_generator.sample_lengthscale = False
+        data_generator.kernel.lengthscale = ls
+        _, gp_samples, gp_ls = data_generator.simulatedata(n_samples=1000)
+        data_generator.sample_lengthscale = True  # For next iteration as same data generator is used.
+
         key = jax.random.PRNGKey(random.randint(0, 9999))
         rng, z_rng, init_rng = jax.random.split(key, 3)
         z = jax.random.normal(z_rng, (1000, self.model.encoder.latent_dim))
