@@ -7,7 +7,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 
 
-def read_data(file_path: str) -> (jnp.ndarray, gpd.GeoDataFrame):
+def read_data(file_path: str, normalize=True) -> (jnp.ndarray, gpd.GeoDataFrame):
     """Read a shapefile and return the x coordinates along with the GeoDataFrame"""
     data_frame = gpd.read_file(file_path)
     data_frame['area_id'] = data_frame.index + 1
@@ -19,6 +19,12 @@ def read_data(file_path: str) -> (jnp.ndarray, gpd.GeoDataFrame):
     centroids["y"] = temp_centroids.geometry.apply(lambda x: x.y)
     x_coords = jnp.array(centroids["x"])
     y_coords = jnp.array(centroids["y"])
+
+    # normalize
+    if normalize:
+        x_coords = (x_coords - jnp.min(x_coords))/(jnp.max(x_coords) - jnp.min(x_coords))
+        y_coords = (y_coords - jnp.min(y_coords))/(jnp.max(y_coords) - jnp.min(y_coords))
+
     coords = jnp.dstack((x_coords, y_coords))[0]
     x = coords
 

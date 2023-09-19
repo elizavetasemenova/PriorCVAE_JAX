@@ -31,3 +31,5 @@ wandb:
   tags: ["Zimbabwe Prior GP"]
 
 data_shp_path: ???
+load_model_path: ""
+normalize : False
