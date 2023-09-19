@@ -1,0 +1,2 @@
+_target_: flax.linen.leaky_relu
+_partial_: True

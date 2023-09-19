@@ -8,6 +8,8 @@ defaults:
   - optimizer: adam
   - loss: squared_sum_kl
   - kernel@mmd: squared_exponential
+  - model/activations@enc_activation: leaky_relu
+  - model/activations@dec_activation: leaky_relu
 
 n_data: 80
 x0: 0
@@ -18,8 +20,10 @@ discrete_ls: null
 hidden_dim: 60
 latent_dim: 40
 
+activation_fn: leaky_relu
+
 batch_size: 1000
-iterations: 40000
+iterations: 4000
 conditional: True
 vae_var: 1.0
 debug: True

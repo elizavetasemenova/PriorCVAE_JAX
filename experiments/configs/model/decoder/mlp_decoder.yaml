@@ -1,2 +1,3 @@
 _target_: priorCVAE.models.MLPDecoder
 _partial_: True
+activations: ${dec_activation}
