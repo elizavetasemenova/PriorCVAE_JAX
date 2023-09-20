@@ -321,6 +321,6 @@ class SumMMDAndKL(Loss):
 
         kld_loss = kl_divergence(z_mu, z_logvar)
 
-        loss = sq_mmd_loss + kld_loss + self.kl_scaling * self.reconstruction_loss_scale * reconstruction_loss
+        loss = sq_mmd_loss + self.kl_scaling * kld_loss + self.reconstruction_loss_scale * reconstruction_loss
         # self.step_increase_parameter()
         return loss, {"KLD": kld_loss, "MMD^2": sq_mmd_loss, "reconstruction_loss": reconstruction_loss} | sq_mmd_vals

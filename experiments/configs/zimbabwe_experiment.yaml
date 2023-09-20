@@ -8,12 +8,14 @@ defaults:
   - optimizer: adam
   - loss: squared_sum_kl
   - kernel@mmd: squared_exponential
+  - model/activations@enc_activation: tanh
+  - model/activations@dec_activation: tanh
 
 sample_lengthscale: True
 discrete_ls: null
 
-hidden_dim: 60
-latent_dim: 40
+hidden_dim: 100
+latent_dim: 60
 
 batch_size: 1000
 iterations: 10000
