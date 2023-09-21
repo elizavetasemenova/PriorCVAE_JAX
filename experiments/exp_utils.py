@@ -2,9 +2,9 @@ import os
 import random
 import shutil
 from distutils.dir_util import copy_tree
-from typing import Dict
 
 from flax.core import FrozenDict
+import numpyro
 import wandb
 import jax.numpy as jnp
 import hydra
@@ -206,7 +206,11 @@ def wandb_log_decoder_statistics(decoder: Decoder, decoder_params: FrozenDict, l
 
     key = jax.random.PRNGKey(random.randint(0, 9999))
     _, z_rng = jax.random.split(key, 2)
-    ls = ls_prior.sample(z_rng, (1,))
+    if data_generator.lengthscale_options is None:
+        ls = ls_prior.sample(z_rng, (1,))
+    else:
+        idx = numpyro.distributions.discrete.DiscreteUniform(0, data_generator.lengthscale_options.shape[0] - 1).sample(z_rng, (1,))
+        ls = data_generator.lengthscale_options[idx]
 
     data_generator.sample_lengthscale = False
     data_generator.kernel.lengthscale = ls
