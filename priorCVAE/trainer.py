@@ -2,13 +2,11 @@
 Trainer class for training Prior{C}VAE models.
 """
 import time
-from typing import List, Tuple
+from typing import List
 from functools import partial
 import random
 import logging
 
-import numpyro
-import matplotlib.pyplot as plt
 import wandb
 from optax import GradientTransformation
 import jax
@@ -16,7 +14,7 @@ import jax.numpy as jnp
 from jax.random import KeyArray
 from flax.training import train_state
 
-from priorCVAE.models import VAE, MLPDecoderTwoHeads
+from priorCVAE.models import VAE
 from priorCVAE.losses import SquaredSumAndKL, Loss
 
 log = logging.getLogger(__name__)
@@ -27,21 +25,23 @@ class VAETrainer:
     VAE trainer class.
     """
 
-    def __init__(self, model: VAE, optimizer: GradientTransformation, loss: Loss = SquaredSumAndKL(), vmin: float = 0,
-                 vmax: float = 1.):
+    def __init__(self, model: VAE, optimizer: GradientTransformation, loss: Loss = SquaredSumAndKL(),
+                 wandb_log_decoder_fn=None, log_args: dict = None):
         """
         Initialize the VAETrainer object.
 
         :param model: model object of the class `priorCVAE.models.VAE`.
         :param optimizer: optimizer to be used to train the model.
         :param loss: loss function object of the `priorCVAE.losses.Loss`
+        :param wandb_log_decoder_fn: log function for the decoder samples to wandb.
+        :param log_args: log arguments to be passed to the wandb_log_decoder_fn.
         """
         self.model = model
         self.optimizer = optimizer
         self.state = None
         self.loss_fn = loss
-        self.vmin = vmin
-        self.vmax = vmax
+        self.wandb_log_decoder_fn = wandb_log_decoder_fn
+        self.log_args = log_args
 
     def init_params(self, y: jnp.ndarray, c: jnp.ndarray = None, key: KeyArray = None, params=None):
         """
@@ -139,147 +139,15 @@ class VAETrainer:
                     wandb.log({"Test Loss": loss_test[-1]}, step=iterations)
 
                     if iterations % 50 == 0:
-                        if test_set[0] is not None:
-                            ls_to_plot = random.random()
-                            # FIXME
-                            # self.log_decoder_samples(ls=ls_to_plot, x_val=test_set[0][0], itr=iterations)
-                            self.log_statistics(data_generator=data_generator, itr=iterations)
-                        else:
-                            self.log_decoder_images(iterations, img_shape=batch_train[1].shape[1:])
+                        self.wandb_log_decoder_fn(decoder=self.model.decoder,
+                                                  decoder_params=self.state.params["decoder"],
+                                                  latent_dim=self.model.encoder.latent_dim,
+                                                  conditional=self.loss_fn.conditional, itr=iterations,
+                                                  args=self.log_args)
 
         t_elapsed = time.time() - t_start
 
         return loss_train, loss_test, t_elapsed
-
-    def log_decoder_images(self, itr: int, img_shape: Tuple, plot_mean: bool = True):
-        # FIXME: Merge two logging functions
-        decoder = self.model.decoder
-        decoder_params = self.state.params["decoder"]
-        latent_dim = self.model.encoder.latent_dim
-        # conditional = self.loss_fn.conditional
-        n = 9
-
-        key = jax.random.PRNGKey(random.randint(0, 9999))
-        rng, z_rng, init_rng = jax.random.split(key, 3)
-        z = jax.random.normal(z_rng, (n, latent_dim))
-
-        # if conditional:
-            # FIXME: To implement
-
-        m = decoder.apply({'params': decoder_params}, z)
-        S = 1
-
-        if plot_mean:
-            out = m
-        else:
-            out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
-
-        plt.clf()
-        fig, ax = plt.subplots(3, 3, figsize=(15, 12))
-        for i in range(n):
-            row = int(i / 3)
-            cols = int(i % 3)
-            ax[row][cols].imshow(out[i, :].reshape(img_shape), vmin=self.vmin, vmax=self.vmax)
-
-        wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
-        plt.close()
-
-    def log_statistics(self, data_generator, itr: int):
-        """
-        ToDo: Only for Zimbabwe
-        """
-        # Sample ls
-        a = numpyro.distributions.Gamma(4, 2)
-        key = jax.random.PRNGKey(random.randint(0, 9999))
-        _, z_rng = jax.random.split(key, 2)
-        ls = a.sample(z_rng, (1,))
-
-        conditional = self.loss_fn.conditional
-        data_generator.sample_lengthscale = False
-        data_generator.kernel.lengthscale = ls
-        _, gp_samples, gp_ls = data_generator.simulatedata(n_samples=1000)
-        data_generator.sample_lengthscale = True  # For next iteration as same data generator is used.
-
-        key = jax.random.PRNGKey(random.randint(0, 9999))
-        rng, z_rng, init_rng = jax.random.split(key, 3)
-        z = jax.random.normal(z_rng, (1000, self.model.encoder.latent_dim))
-        if conditional:
-            c = ls * jnp.ones((z.shape[0], 1))
-            z = jnp.concatenate([z, c], axis=-1)
-        decoder = self.model.decoder
-        decoder_params = self.state.params["decoder"]
-        vae_samples = decoder.apply({'params': decoder_params}, z)
-
-        gp_samples_mean = jnp.mean(gp_samples, axis=0)
-        gp_draws_25, gp_draws_75 = jnp.quantile(gp_samples, jnp.array([.25, .75]), axis=0)
-
-        vae_samples_mean = jnp.mean(vae_samples, axis=0)
-        vae_draws_25, vae_draws_75 = jnp.quantile(vae_samples, jnp.array([.25, .75]), axis=0)
-
-        plt.scatter(jnp.arange(len(gp_samples_mean)), gp_samples_mean)
-        plt.scatter(jnp.arange(len(vae_samples_mean)), vae_samples_mean, color="red")
-
-        plt.vlines(x=jnp.arange(len(gp_draws_25)),
-                   ymin=gp_draws_25,
-                   ymax=gp_draws_75,
-                   color="dodgerblue",
-                   label="GP",
-                   linewidth=0.8)
-
-        plt.vlines(x=jnp.arange(len(vae_draws_25)),
-                   ymin=vae_draws_25,
-                   ymax=vae_draws_75,
-                   color="red",
-                   label="VAE",
-                   linewidth=1.1)
-        plt.legend()
-        plt.ylim([-1, 1])
-
-        if wandb.run:
-            wandb.log({f"Samples (ls={ls})": wandb.Image(plt)}, step=itr)
-
-        plt.close()
-
-    def log_decoder_samples(self, ls: float, x_val: jnp.ndarray, itr: int, plot_mean: bool = True):
-        """
-        Log decoder samples to wandb.
-        """
-        decoder = self.model.decoder
-        decoder_params = self.state.params["decoder"]
-        latent_dim = self.model.encoder.latent_dim
-        conditional = self.loss_fn.conditional
-        n = 9
-
-        key = jax.random.PRNGKey(random.randint(0, 9999))
-        rng, z_rng, init_rng = jax.random.split(key, 3)
-        z = jax.random.normal(z_rng, (n, latent_dim))
-
-        if conditional:
-            c = ls * jnp.ones((z.shape[0], 1))
-            z = jnp.concatenate([z, c], axis=-1)
-
-        if isinstance(decoder, MLPDecoderTwoHeads):
-            m, log_S = decoder.apply({'params': decoder_params}, z)
-            S = jnp.exp(log_S)
-        else:
-            m = decoder.apply({'params': decoder_params}, z)
-            S = 1
-
-        if plot_mean:
-            out = m
-        else:
-            out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
-
-        plt.clf()
-        fig, ax = plt.subplots(3, 3, figsize=(16, 12))
-        for i in range(n):
-            row = int(i / 3)
-            cols = int(i % 3)
-            ax[row][cols].plot(x_val, out[i, :])
-
-        plt.title(f'Examples of learnt trajectories (ls={ls})')
-        wandb.log({f"Decoder Samples (ls={ls})": wandb.Image(plt)}, step=itr)
-        plt.close()
 
     def train_sequentially(self, data_generator, test_set: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
                            num_epochs: int = 10, batch_size: int = 100, debug: bool = True,
@@ -331,7 +199,7 @@ class VAETrainer:
                 if wandb.run:
                     wandb.log({"Train Loss": loss_train[-1]}, step=e)
                     wandb.log({"Test Loss": loss_test[-1]}, step=e)
-                    wandb.log({"Regulzarization Loss": loss_component_vals[0]}, step=e)
+                    wandb.log({"Regularization Loss": loss_component_vals[0]}, step=e)
                     wandb.log({"Reconstruction Loss": loss_component_vals[1]}, step=e)
 
         t_elapsed = time.time() - t_start

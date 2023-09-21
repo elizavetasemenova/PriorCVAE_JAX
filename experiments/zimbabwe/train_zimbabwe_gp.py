@@ -6,7 +6,6 @@ import logging
 import random
 
 import jax
-import numpyro.distributions
 import wandb
 import jax.numpy as jnp
 import hydra
@@ -17,7 +16,8 @@ import jax.config as config
 config.update("jax_enable_x64", True)
 
 from priorCVAE.utility import save_model_params, load_model_params
-from experiments.exp_utils import get_hydra_output_dir, plot_lengthscales, setup_wandb, move_wandb_hydra_files
+from experiments.exp_utils import get_hydra_output_dir, plot_lengthscales, setup_wandb, move_wandb_hydra_files, \
+    wandb_log_decoder_statistics
 from zimbabwe_utility import read_data, plot_prior_samples, plot_statistics, plot_decoder_samples
 
 log = logging.getLogger(__name__)
@@ -37,7 +37,8 @@ def run_experiment(cfg: DictConfig):
     # Data generator
     x, data_frame = read_data(cfg.data_shp_path, normalize=cfg.normalize)
 
-    data_generator = instantiate(cfg.data_generator)(x=x, lengthscale_prior=numpyro.distributions.Uniform(0, 1))  #numpyro.distributions.Gamma(1, 1))
+    ls_prior = instantiate(cfg.prior_ls)
+    data_generator = instantiate(cfg.data_generator)(x=x, lengthscale_prior=ls_prior)
     batch_x_train, batch_y_train, batch_ls_train = data_generator.simulatedata(n_samples=cfg.batch_size)
     x_test, y_test, ls_test = data_generator.simulatedata(n_samples=cfg.batch_size)
     log.info(f"Data generator initialized...")
@@ -64,7 +65,10 @@ def run_experiment(cfg: DictConfig):
     optimizer = instantiate(cfg.optimizer)
     loss = instantiate(cfg.loss)
 
-    trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss)
+    data_generator_log = instantiate(cfg.data_generator)(x=x, lengthscale_prior=ls_prior)
+    log_args = {"data_generator": data_generator_log, "n_samples": 1000}
+    trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, wandb_log_decoder_fn=wandb_log_decoder_statistics,
+                                       log_args=log_args)
 
     c = ls_test[0] if cfg.conditional else None
 

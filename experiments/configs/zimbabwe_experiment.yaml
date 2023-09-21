@@ -10,6 +10,7 @@ defaults:
   - kernel@mmd: squared_exponential
   - model/activations@enc_activation: tanh
   - model/activations@dec_activation: tanh
+  - distributions@prior_ls: gamma
 
 sample_lengthscale: True
 discrete_ls: null

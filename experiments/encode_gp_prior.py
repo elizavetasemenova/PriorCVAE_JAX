@@ -10,6 +10,7 @@ import hydra
 from omegaconf import DictConfig
 from hydra.utils import instantiate
 import jax.config as config
+from exp_utils import wandb_log_decoder_samples
 
 config.update("jax_enable_x64", True)
 
@@ -60,7 +61,9 @@ def run_experiment(cfg: DictConfig):
     optimizer = instantiate(cfg.optimizer)
     loss = instantiate(cfg.loss)
 
-    trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss)
+    log_args = {"plot_mean": True, "x_val": x, "ls_prior": data_generator.lengthscale_prior}
+    trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, wandb_log_decoder_fn=wandb_log_decoder_samples,
+                                       log_args=log_args)
 
     c = ls_test[0] if cfg.conditional else None
     trainer.init_params(y_test[0], c=c)

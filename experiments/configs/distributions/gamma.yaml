@@ -1,0 +1,3 @@
+_target_: numpyro.distributions.Gamma
+concentration: 1
+rate: 1

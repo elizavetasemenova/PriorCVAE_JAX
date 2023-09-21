@@ -15,7 +15,7 @@ import jax.config as config
 import flax.linen as nn
 
 from priorCVAE.utility import save_model_params, load_model_params
-from experiments.exp_utils import get_hydra_output_dir, setup_wandb, move_wandb_hydra_files
+from experiments.exp_utils import get_hydra_output_dir, setup_wandb, move_wandb_hydra_files, wandb_log_decoder_images
 from pop_gen_utility import read_csv_data, split_data_into_time_batches, plot_decoder_samples, normalize_data
 
 config.update("jax_enable_x64", True)
@@ -76,7 +76,9 @@ def run_experiment(cfg: DictConfig):
     if cfg.last_layer_sigmoid:
         decoder.last_layer_activation = nn.sigmoid
 
-    trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, vmin=cfg.vmin, vmax=cfg.vmax)
+    log_args = {"plot_mean": False, "img_shape": (32, 32), "vmin": cfg.vmin, "vmax": cfg.vmax}
+    trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, wandb_log_decoder_fn=wandb_log_decoder_images,
+                                       log_args=log_args)
 
     params = None
     if cfg.load_model_path != "":

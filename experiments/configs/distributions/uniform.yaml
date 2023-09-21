@@ -1,0 +1,3 @@
+_target_: numpyro.distributions.Uniform
+low: 0
+high: 1

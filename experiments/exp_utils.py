@@ -2,7 +2,9 @@ import os
 import random
 import shutil
 from distutils.dir_util import copy_tree
+from typing import Dict
 
+from flax.core import FrozenDict
 import wandb
 import jax.numpy as jnp
 import hydra
@@ -10,7 +12,7 @@ import jax
 import matplotlib.pyplot as plt
 from omegaconf import OmegaConf
 
-from priorCVAE.models import MLPDecoderTwoHeads
+from priorCVAE.models import MLPDecoderTwoHeads, Decoder
 
 
 def get_hydra_output_dir():
@@ -118,3 +120,132 @@ def move_wandb_hydra_files(output_dir: str) -> str:
     shutil.move(output_dir, final_output_dir)
     copy_tree(f"{os.path.sep}".join(wandb.run.dir.split(os.path.sep)[:-1]), os.path.join(final_output_dir))
     return final_output_dir
+
+
+def wandb_log_decoder_images(decoder: Decoder, decoder_params: FrozenDict, latent_dim: int, itr: int, conditional: bool,
+                             args: dict):
+    """
+    Log decoder outputs which are images to wandb. This is mostly for population genetics experiment.
+    """
+    n = 9
+
+    key = jax.random.PRNGKey(random.randint(0, 9999))
+    rng, z_rng, init_rng = jax.random.split(key, 3)
+    z = jax.random.normal(z_rng, (n, latent_dim))
+
+    if conditional:
+        raise NotImplementedError
+
+    m = decoder.apply({'params': decoder_params}, z)
+    S = 1
+
+    if args["plot_mean"]:
+        out = m
+    else:
+        out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
+
+    plt.clf()
+    fig, ax = plt.subplots(3, 3, figsize=(15, 12))
+    for i in range(n):
+        row = int(i / 3)
+        cols = int(i % 3)
+        ax[row][cols].imshow(out[i, :].reshape(args["img_shape"]), vmin=args["vmin"], vmax=args["vmax"])
+
+    wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
+    plt.close()
+
+
+def wandb_log_decoder_samples(decoder: Decoder, decoder_params: FrozenDict, latent_dim: int, itr: int,
+                              conditional: bool, args: dict):
+    """
+    Log decoder samples to wandb.
+    """
+    n = 9
+    key = jax.random.PRNGKey(random.randint(0, 9999))
+    rng, z_rng = jax.random.split(key, 2)
+    ls = args["ls_prior"].sample(rng, (1,))
+
+    _, z_rng = jax.random.split(z_rng, 2)
+    z = jax.random.normal(z_rng, (n, latent_dim))
+
+    if conditional:
+        c = ls * jnp.ones((z.shape[0], 1))
+        z = jnp.concatenate([z, c], axis=-1)
+
+    if isinstance(decoder, MLPDecoderTwoHeads):
+        m, log_S = decoder.apply({'params': decoder_params}, z)
+        S = jnp.exp(log_S)
+    else:
+        m = decoder.apply({'params': decoder_params}, z)
+        S = 1
+
+    if args["plot_mean"]:
+        out = m
+    else:
+        out = m + jnp.sqrt(S) * jax.random.normal(z_rng, m.shape)
+
+    plt.clf()
+    fig, ax = plt.subplots(3, 3, figsize=(16, 12))
+    for i in range(n):
+        row = int(i / 3)
+        cols = int(i % 3)
+        ax[row][cols].plot(args["x_val"], out[i, :])
+
+    plt.title(f'Examples of learnt trajectories (ls={ls})')
+    wandb.log({f"Decoder Samples (ls={ls})": wandb.Image(plt)}, step=itr)
+    plt.close()
+
+
+def wandb_log_decoder_statistics(decoder: Decoder, decoder_params: FrozenDict, latent_dim: int, itr: int,
+                                 conditional: bool, args: dict):
+    """
+    Log decoder statistics to wandb. This is mostly for Zimbabwe experiment.
+    """
+    data_generator = args["data_generator"]
+    ls_prior = data_generator.lengthscale_prior
+
+    key = jax.random.PRNGKey(random.randint(0, 9999))
+    _, z_rng = jax.random.split(key, 2)
+    ls = ls_prior.sample(z_rng, (1,))
+
+    data_generator.sample_lengthscale = False
+    data_generator.kernel.lengthscale = ls
+    _, gp_samples, gp_ls = data_generator.simulatedata(n_samples=args["n_samples"])
+
+    key = jax.random.PRNGKey(random.randint(0, 9999))
+    rng, z_rng, init_rng = jax.random.split(key, 3)
+    z = jax.random.normal(z_rng, (args["n_samples"], latent_dim))
+    if conditional:
+        c = ls * jnp.ones((z.shape[0], 1))
+        z = jnp.concatenate([z, c], axis=-1)
+
+    vae_samples = decoder.apply({'params': decoder_params}, z)
+
+    gp_samples_mean = jnp.mean(gp_samples, axis=0)
+    gp_draws_25, gp_draws_75 = jnp.quantile(gp_samples, jnp.array([.25, .75]), axis=0)
+
+    vae_samples_mean = jnp.mean(vae_samples, axis=0)
+    vae_draws_25, vae_draws_75 = jnp.quantile(vae_samples, jnp.array([.25, .75]), axis=0)
+
+    plt.scatter(jnp.arange(len(gp_samples_mean)), gp_samples_mean)
+    plt.scatter(jnp.arange(len(vae_samples_mean)), vae_samples_mean, color="red")
+
+    plt.vlines(x=jnp.arange(len(gp_draws_25)),
+               ymin=gp_draws_25,
+               ymax=gp_draws_75,
+               color="dodgerblue",
+               label="GP",
+               linewidth=0.8)
+
+    plt.vlines(x=jnp.arange(len(vae_draws_25)),
+               ymin=vae_draws_25,
+               ymax=vae_draws_75,
+               color="red",
+               label="VAE",
+               linewidth=1.1)
+    plt.legend()
+    plt.ylim([-1, 1])
+
+    wandb.log({f"Samples (ls={ls})": wandb.Image(plt)}, step=itr)
+
+    plt.close()
