@@ -20,8 +20,6 @@ discrete_ls: null
 hidden_dim: 60
 latent_dim: 40
 
-activation_fn: leaky_relu
-
 batch_size: 1000
 iterations: 4000
 conditional: True
