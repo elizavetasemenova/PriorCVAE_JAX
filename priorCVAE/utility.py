@@ -12,8 +12,6 @@ from jax import random
 from jax.random import KeyArray
 from flax.core import FrozenDict
 import numpy as np
-import torch
-import torch.utils.data as data
 
 from priorCVAE.models import Decoder
 
@@ -31,41 +29,6 @@ def numpy_collate(batch):
         return [numpy_collate(samples) for samples in transposed]
     else:
         return np.array(batch)
-
-
-def create_data_loaders(*datasets: Sequence[data.Dataset], train: Union[bool, Sequence[bool]] = True,
-                        batch_size: int = 128, num_workers: int = 4, seed: int = None) -> List[data.DataLoader]:
-    """
-    Creates data loaders used in JAX for a set of datasets.
-    
-    :param datasets: Datasets for which data loaders are created.
-    :param train: Sequence indicating which datasets are used for training and which not. If single bool, the same value
-                  is used for all datasets.
-    :param batch_size: Batch size to use in the data loaders.
-    :param num_workers: Number of workers for each dataset.
-    :param seed: Seed to initialize the workers and shuffling with.
-
-    Details: https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/guide4/Research_Projects_with_JAX.html
-
-    """
-
-    if seed is None:
-        seed = random.randint(0, 9999)
-
-    loaders = []
-    if not isinstance(train, (list, tuple)):
-        train = [train for _ in datasets]
-    for dataset, is_train in zip(datasets, train):
-        loader = data.DataLoader(dataset,
-                                 batch_size=batch_size,
-                                 shuffle=is_train,
-                                 drop_last=is_train,
-                                 collate_fn=numpy_collate,
-                                 num_workers=num_workers,
-                                 persistent_workers=True,
-                                 generator=torch.Generator().manual_seed(seed))
-        loaders.append(loader)
-    return loaders
 
 
 def sq_euclidean_dist(x: jnp.ndarray, y: jnp.ndarray, jitter: float = 1e-10) -> jnp.ndarray:

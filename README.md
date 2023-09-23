@@ -52,7 +52,7 @@ config.update("jax_enable_x64", True)
 
 First install the test-requirements by running the following command from within the conda environment:
 ```shell
-pip install -r requirements-test.txt
+pip install -r requirements_test.txt
 ```
 Then, run the following command:
 ```shell

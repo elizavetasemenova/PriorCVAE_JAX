@@ -191,7 +191,7 @@ def wandb_log_decoder_samples(decoder: Decoder, decoder_params: FrozenDict, late
         cols = int(i % 3)
         ax[row][cols].plot(args["x_val"], out[i, :])
 
-    plt.title(f'Examples of learnt trajectories (ls={ls})')
+    plt.suptitle(f'Examples of learnt trajectories (ls={ls})')
     wandb.log({f"Decoder Samples (ls={ls})": wandb.Image(plt)}, step=itr)
     plt.close()
 
