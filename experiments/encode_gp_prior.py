@@ -14,7 +14,7 @@ from exp_utils import wandb_log_decoder_samples
 
 config.update("jax_enable_x64", True)
 
-from priorCVAE.utility import save_model_params, create_grid
+from priorCVAE.utility import save_model_params, create_grid, load_model_params
 from exp_utils import get_hydra_output_dir, plot_lengthscales, plot_gp_samples, plot_decoder_samples, setup_wandb, \
     move_wandb_hydra_files
 
@@ -66,7 +66,12 @@ def run_experiment(cfg: DictConfig):
                                        log_args=log_args)
 
     c = ls_test[0] if cfg.conditional else None
-    trainer.init_params(y_test[0], c=c)
+
+    params = None
+    if cfg.load_model_path != "":
+        params = load_model_params(cfg.load_model_path)
+
+    trainer.init_params(y_test[0], c, params=params)
 
     test_set = (x_test, y_test, ls_test)
     log.info(f"Starting training...")

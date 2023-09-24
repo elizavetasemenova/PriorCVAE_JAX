@@ -34,3 +34,5 @@ wandb:
   username: null
   project: "PriorCVAE"
   tags: ["GP Prior"]
+
+load_model_path: ""
