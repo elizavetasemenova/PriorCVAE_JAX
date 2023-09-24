@@ -76,7 +76,7 @@ def run_experiment(cfg: DictConfig):
     if cfg.last_layer_sigmoid:
         decoder.last_layer_activation = nn.sigmoid
 
-    log_args = {"plot_mean": False, "img_shape": (32, 32), "vmin": cfg.vmin, "vmax": cfg.vmax}
+    log_args = {"plot_mean": False, "img_shape": (32, 32), "vmin": cfg.vmin, "vmax": cfg.vmax, "output_dir": output_dir}
     trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, wandb_log_decoder_fn=wandb_log_decoder_images,
                                        log_args=log_args)
 

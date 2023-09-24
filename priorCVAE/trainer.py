@@ -1,11 +1,13 @@
 """
 Trainer class for training Prior{C}VAE models.
 """
+import os
 import time
 from typing import List
 from functools import partial
 import random
 import logging
+import shutil
 
 import wandb
 from optax import GradientTransformation
@@ -16,6 +18,7 @@ from flax.training import train_state
 
 from priorCVAE.models import VAE
 from priorCVAE.losses import SquaredSumAndKL, Loss
+from priorCVAE.utility import save_model_params
 
 log = logging.getLogger(__name__)
 
@@ -144,6 +147,10 @@ class VAETrainer:
                                                   latent_dim=self.model.encoder.latent_dim,
                                                   conditional=self.loss_fn.conditional, itr=iterations,
                                                   args=self.log_args)
+                        if os.path.exists(os.path.join(self.log_args["output_dir"], "model_intermediate")):
+                            shutil.rmtree(os.path.join(self.log_args["output_dir"], "model_intermediate"))
+                        save_model_params(os.path.join(self.log_args["output_dir"], "model_intermediate"),
+                                          self.state.params)
 
         t_elapsed = time.time() - t_start
 

@@ -61,7 +61,8 @@ def run_experiment(cfg: DictConfig):
     optimizer = instantiate(cfg.optimizer)
     loss = instantiate(cfg.loss)
 
-    log_args = {"plot_mean": True, "x_val": x, "ls_prior": data_generator.lengthscale_prior}
+    log_args = {"plot_mean": True, "x_val": x, "ls_prior": data_generator.lengthscale_prior,
+                "output_dir": output_dir}
     trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, wandb_log_decoder_fn=wandb_log_decoder_samples,
                                        log_args=log_args)
 
