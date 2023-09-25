@@ -84,7 +84,7 @@ def run_experiment(cfg: DictConfig):
     if cfg.load_model_path != "":
         params = load_model_params(cfg.load_model_path)
 
-    trainer.init_params(last_t_data[:1], params=params)
+    trainer.init_params(last_t_data[:10], params=params)
 
     test_set = (None, test_data, None)
     log.info(f"Starting training...")
