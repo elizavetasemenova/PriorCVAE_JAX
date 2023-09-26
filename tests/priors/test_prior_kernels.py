@@ -8,7 +8,7 @@ import numpy as np
 import jax
 import gpflow
 
-from priorCVAE.priors.kernels import SquaredExponential, Matern32, Matern52, RationalQuadratic
+from priorCVAE.priors.kernels import SquaredExponential, Matern32, Matern52, RationalQuadratic, Matern12
 
 
 @pytest.fixture(name="lengthscale", params=[0.1, 0.5, 1.0])
@@ -43,6 +43,13 @@ def true_matern32_kernel(x1, x2, lengthscale, variance):
 def true_matern52_kernel(x1, x2, lengthscale, variance):
     """Expected value of the Matern 5/2 kernel"""
     gpflow_kernel = gpflow.kernels.Matern52(lengthscales=lengthscale, variance=variance)
+    K = gpflow_kernel(x1, x2)
+    return K
+
+
+def true_matern12_kernel(x1, x2, lengthscale, variance):
+    """Expected value of the Matern 1/2 kernel"""
+    gpflow_kernel = gpflow.kernels.Matern12(lengthscales=lengthscale, variance=variance)
     K = gpflow_kernel(x1, x2)
     return K
 
@@ -99,6 +106,22 @@ def test_matern52_kernel(lengthscale, variance, dimension, num_data):
     kernel_val = kernel(x1, x2)
 
     expected_val = true_matern52_kernel(x1, x2, lengthscale, variance)
+    assert kernel_val.shape == expected_val.shape  # Shape
+    np.testing.assert_array_almost_equal(kernel_val, expected_val, decimal=6)  # Value
+
+
+def test_matern12_kernel(lengthscale, variance, dimension, num_data):
+    """
+    Test the shape and value of Matern 1/2 kernel.
+    """
+    kernel = Matern12(lengthscale=lengthscale, variance=variance)
+    key = jax.random.PRNGKey(123)
+    x1 = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.01, maxval=1.)
+    key, _ = jax.random.split(key)
+    x2 = jax.random.uniform(key=key, shape=(num_data, dimension), minval=0.01, maxval=1.)
+    kernel_val = kernel(x1, x2)
+
+    expected_val = true_matern12_kernel(x1, x2, lengthscale, variance)
     assert kernel_val.shape == expected_val.shape  # Shape
     np.testing.assert_array_almost_equal(kernel_val, expected_val, decimal=6)  # Value
 
