@@ -25,6 +25,7 @@ iterations: 4000
 conditional: True
 vae_var: 1.0
 debug: True
+sample_kernel: False
 
 plot_ls: 0.3
 kl_scaling: 0.1

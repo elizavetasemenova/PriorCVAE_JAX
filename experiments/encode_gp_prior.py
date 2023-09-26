@@ -41,8 +41,8 @@ def run_experiment(cfg: DictConfig):
     log.info(f"---------------------------------------------")
 
     # Plot samples
-    plot_gp_samples(batch_x_train, batch_y_train, batch_ls_train, output_dir=output_dir)
-    plot_lengthscales(batch_ls_train, ls_test, output_dir=output_dir)
+    plot_gp_samples(batch_x_train, batch_y_train, batch_ls_train[:, :1], output_dir=output_dir)
+    plot_lengthscales(batch_ls_train[:, :1], ls_test[:, :1], output_dir=output_dir)
 
     # Model
     encoder = instantiate(cfg.model.encoder)(hidden_dim=cfg.hidden_dim, latent_dim=cfg.latent_dim)
@@ -62,7 +62,7 @@ def run_experiment(cfg: DictConfig):
     loss = instantiate(cfg.loss)
 
     log_args = {"plot_mean": True, "x_val": x, "ls_prior": data_generator.lengthscale_prior,
-                "output_dir": output_dir}
+                "output_dir": output_dir, "sample_kernel": cfg.sample_kernel}
     trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, wandb_log_decoder_fn=wandb_log_decoder_samples,
                                        log_args=log_args)
 
@@ -92,7 +92,7 @@ def run_experiment(cfg: DictConfig):
     trained_decoder_params = trainer.state.params["decoder"]
     plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=cfg.plot_ls,
                          latent_dim=cfg.latent_dim, x_val=x_test[0], n=15, output_dir=output_dir,
-                         conditional=cfg.conditional)
+                         conditional=cfg.conditional, sample_kernel=cfg.sample_kernel)
 
     if wandb.run:
         output_dir = move_wandb_hydra_files(output_dir)  # Move files to a different folder with wandb run id

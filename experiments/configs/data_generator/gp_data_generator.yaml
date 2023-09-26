@@ -3,3 +3,4 @@ kernel: ${prior}
 _partial_: True
 lengthscale_options: ${discrete_ls}
 sample_lengthscale: ${sample_lengthscale}
+sample_kernel: ${sample_kernel}

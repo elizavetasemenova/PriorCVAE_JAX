@@ -62,13 +62,16 @@ def plot_lengthscales(train_lengthscale, test_lengthscale, output_dir: str = "")
 
 
 def plot_decoder_samples(decoder, decoder_params, ls, latent_dim, x_val, n: int = 15, output_dir: str = "",
-                         conditional: bool = True, plot_mean: bool = True):
+                         conditional: bool = True, plot_mean: bool = True, sample_kernel: bool = False):
     key = jax.random.PRNGKey(random.randint(0, 9999))
     rng, z_rng, init_rng = jax.random.split(key, 3)
     z = jax.random.normal(z_rng, (n, latent_dim))
 
     if conditional:
         c = ls * jnp.ones((z.shape[0], 1))
+        if sample_kernel:
+            nu = numpyro.distributions.discrete.DiscreteUniform(0, 1).sample(z_rng)
+            c = jnp.concatenate([c, nu * jnp.ones_like(c)], axis=1)
         z = jnp.concatenate([z, c], axis=-1)
 
     if isinstance(decoder, MLPDecoderTwoHeads):
@@ -164,12 +167,16 @@ def wandb_log_decoder_samples(decoder: Decoder, decoder_params: FrozenDict, late
     key = jax.random.PRNGKey(random.randint(0, 9999))
     rng, z_rng = jax.random.split(key, 2)
     ls = args["ls_prior"].sample(rng, (1,))
+    sample_kernel = args["sample_kernel"]
 
     _, z_rng = jax.random.split(z_rng, 2)
     z = jax.random.normal(z_rng, (n, latent_dim))
 
     if conditional:
         c = ls * jnp.ones((z.shape[0], 1))
+        if sample_kernel:
+            nu = numpyro.distributions.discrete.DiscreteUniform(0, 1).sample(z_rng)
+            c = jnp.concatenate([c, nu * jnp.ones_like(c)], axis=1)
         z = jnp.concatenate([z, c], axis=-1)
 
     if isinstance(decoder, MLPDecoderTwoHeads):
