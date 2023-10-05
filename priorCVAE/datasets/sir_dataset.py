@@ -29,7 +29,7 @@ class SIRDataset:
         self.beta = beta
         self.gamma = gamma
 
-    def simulatedata(self, n_states: int = 3, n_samples: int = 10000, observed_data=None) -> [jnp.ndarray, jnp.ndarray,
+    def simulatedata(self, n_states: int = 3, n_samples: int = 1000, observed_data=None) -> [jnp.ndarray, jnp.ndarray,
                                                                                               jnp.ndarray]:
         """
         Simulate data from the GP.
@@ -53,6 +53,9 @@ class SIRDataset:
         # observations = sir_simulation['observed']
 
         z_i = z[:, :, 1]
+
+        # TODO:Normalize
+        z_i = (z_i - jnp.min(z_i)) / (jnp.max(z_i) - jnp.min(z_i))
         c = sir_simulation['c'].reshape((-1, 2))
 
         assert z_i.shape[0] == c.shape[0]

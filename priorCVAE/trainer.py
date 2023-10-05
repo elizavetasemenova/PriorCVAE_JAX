@@ -121,7 +121,7 @@ class VAETrainer:
 
         for iterations in range(num_iterations):
             # Generate new batch
-            batch_train = data_generator.simulatedata(batch_size)
+            batch_train = data_generator.simulatedata(n_samples=batch_size)
             z_key, key = jax.random.split(z_key)
             self.state, loss_train_value, loss_component_vals = self.train_step(self.state, batch_train, key)
             loss_train.append(loss_train_value)
