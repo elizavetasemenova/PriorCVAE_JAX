@@ -260,3 +260,30 @@ def wandb_log_decoder_statistics(decoder: Decoder, decoder_params: FrozenDict, l
     wandb.log({f"Samples (ls={ls})": wandb.Image(plt)}, step=itr)
 
     plt.close()
+
+
+def wandb_log_decoder_SIR_trajectories(decoder, decoder_params, latent_dim, conditional, itr, args: dict):
+    """
+    Log decoder samples to wandb.
+    """
+    n = 20
+    key = jax.random.PRNGKey(random.randint(0, 9999))
+    rng, z_rng = jax.random.split(key, 2)
+    gamma = args["gamma"]
+    beta = args["beta"]
+
+    _, z_rng = jax.random.split(z_rng, 2)
+    z = jax.random.normal(z_rng, (n, latent_dim))
+
+    c = jnp.array([beta, gamma]).reshape(-1, 2)
+    c = jnp.repeat(c, z.shape[0], axis=0)
+    z = jnp.concatenate([z, c], axis=-1)
+    out = decoder.apply({'params': decoder_params}, z)
+
+    plt.clf()
+    for s in out:
+        plt.plot(s, c="tab:blue")
+
+    plt.suptitle(f'Examples of learnt trajectories')
+    wandb.log({f"Decoder Samples": wandb.Image(plt)}, step=itr)
+    plt.close()

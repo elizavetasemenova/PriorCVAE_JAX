@@ -13,8 +13,8 @@ num_days: 14
 hidden_dim: 10
 latent_dim: 6
 
-batch_size: 1000
-iterations: 400
+batch_size: 2000
+iterations: 10000
 conditional: True
 vae_var: 1.0
 debug: True
@@ -28,3 +28,4 @@ wandb:
   tags: ["SIR Prior"]
 
 load_model_path: ""
+normalize: True

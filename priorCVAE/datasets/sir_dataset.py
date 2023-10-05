@@ -17,7 +17,7 @@ class SIRDataset:
     Generate SIR draws.
     """
 
-    def __init__(self, z_init: jnp.ndarray, num_days: int, beta=None, gamma=None):
+    def __init__(self, z_init: jnp.ndarray, num_days: int, beta=None, gamma=None, normalize: bool = True):
         """
         Initialize the SIR dataset class.
 
@@ -28,6 +28,8 @@ class SIRDataset:
         self.time = jnp.arange(float(num_days))
         self.beta = beta
         self.gamma = gamma
+        self.normalize = normalize
+        self.population_size = 763
 
     def simulatedata(self, n_states: int = 3, n_samples: int = 1000, observed_data=None) -> [jnp.ndarray, jnp.ndarray,
                                                                                               jnp.ndarray]:
@@ -54,8 +56,9 @@ class SIRDataset:
 
         z_i = z[:, :, 1]
 
-        # TODO:Normalize
-        z_i = (z_i - jnp.min(z_i)) / (jnp.max(z_i) - jnp.min(z_i))
+        if self.normalize:
+            z_i = z_i / self.population_size
+
         c = sir_simulation['c'].reshape((-1, 2))
 
         assert z_i.shape[0] == c.shape[0]

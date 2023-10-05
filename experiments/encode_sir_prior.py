@@ -10,13 +10,12 @@ import hydra
 from omegaconf import DictConfig
 from hydra.utils import instantiate
 import jax.config as config
-from exp_utils import wandb_log_decoder_samples
 
 config.update("jax_enable_x64", True)
 
 from priorCVAE.utility import save_model_params, load_model_params
-from exp_utils import get_hydra_output_dir, plot_decoder_samples, setup_wandb, \
-    move_wandb_hydra_files
+from exp_utils import get_hydra_output_dir, setup_wandb, \
+    move_wandb_hydra_files, wandb_log_decoder_SIR_trajectories
 
 log = logging.getLogger(__name__)
 
@@ -34,6 +33,7 @@ def run_experiment(cfg: DictConfig):
 
     # Data generator
     data_generator = instantiate(cfg.data_generator)
+
     batch_x_train, batch_y_train, batch_c_train = data_generator.simulatedata(n_samples=cfg.batch_size)
     x_test, y_test, c_test = data_generator.simulatedata(n_samples=cfg.batch_size)
     log.info(f"Data generator initialized...")
@@ -41,7 +41,6 @@ def run_experiment(cfg: DictConfig):
 
     # Plot samples
     # plot_gp_samples(batch_x_train, batch_y_train, batch_ls_train[:, :1], output_dir=output_dir)
-    # plot_lengthscales(batch_ls_train[:, :1], ls_test[:, :1], output_dir=output_dir)
 
     # Model
     encoder = instantiate(cfg.model.encoder)(hidden_dim=cfg.hidden_dim, latent_dim=cfg.latent_dim)
@@ -60,10 +59,9 @@ def run_experiment(cfg: DictConfig):
     optimizer = instantiate(cfg.optimizer)
     loss = instantiate(cfg.loss)
 
-    # log_args = {"plot_mean": True, "ls_prior": data_generator.lengthscale_prior,
-    #             "output_dir": output_dir, "sample_kernel": cfg.sample_kernel}
-    trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, wandb_log_decoder_fn=None,
-                                       log_args={})
+    log_args = {"gamma": 0.4, "beta": 2, "output_dir": output_dir}
+    trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, wandb_log_decoder_fn=wandb_log_decoder_SIR_trajectories,
+                                       log_args=log_args)
 
     c = c_test[0] if cfg.conditional else None
 
@@ -88,10 +86,10 @@ def run_experiment(cfg: DictConfig):
     log.info(f"Test loss: {test_loss[-1]}")
     log.info(f"---------------------------------------------")
 
-    trained_decoder_params = trainer.state.params["decoder"]
-    plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=cfg.plot_ls,
-                         latent_dim=cfg.latent_dim, x_val=x_test[0], n=15, output_dir=output_dir,
-                         conditional=cfg.conditional, sample_kernel=cfg.sample_kernel)
+    # trained_decoder_params = trainer.state.params["decoder"]
+    # plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=cfg.plot_ls,
+    #                      latent_dim=cfg.latent_dim, x_val=x_test[0], n=15, output_dir=output_dir,
+    #                      conditional=cfg.conditional, sample_kernel=cfg.sample_kernel)
 
     if wandb.run:
         output_dir = move_wandb_hydra_files(output_dir)  # Move files to a different folder with wandb run id

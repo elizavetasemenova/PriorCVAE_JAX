@@ -3,3 +3,4 @@ z_init:
   _target_: jax.numpy.array
   object: [762, 1.0, 0.0]
 num_days: ${num_days}
+normalize: ${normalize}
