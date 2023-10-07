@@ -36,3 +36,4 @@ wandb:
 data_shp_path: ???
 load_model_path: ""
 normalize : False
+sample_kernel: False

@@ -34,9 +34,9 @@ def SIR(beta, gamma, time, observed_data, z_init, n_states):
     if z_init is None:
         z_init = numpyro.sample("z_init", npdist.LogNormal(jnp.log(10), 1).expand([n_states]))
     if beta is None:
-        beta = numpyro.sample("beta", npdist.TruncatedNormal(loc=2, scale=1, low=0.))
+        beta = numpyro.sample("beta", npdist.Uniform(0, 4))  # npdist.TruncatedNormal(loc=2, scale=1, low=0.))
     if gamma is None:
-        gamma = numpyro.sample("gamma", npdist.TruncatedNormal(loc=0.4, scale=0.5, low=0.))
+        gamma = numpyro.sample("gamma", npdist.Uniform(0, 1.5))  # npdist.TruncatedNormal(loc=0.4, scale=0.5, low=0.))
 
     # integrate dz/dt, the result will have shape num_days x 2
     z = numpyro.deterministic("z", odeint(dz_dt, z_init, time, rtol=1e-6, atol=1e-5, mxstep=1000))
