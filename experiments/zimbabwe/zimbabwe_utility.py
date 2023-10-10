@@ -1,5 +1,6 @@
 import random
 
+import pymap3d as pm
 import wandb
 import jax
 import jax.numpy as jnp
@@ -20,10 +21,11 @@ def read_data(file_path: str, normalize=True) -> (jnp.ndarray, gpd.GeoDataFrame)
     x_coords = jnp.array(centroids["x"])
     y_coords = jnp.array(centroids["y"])
 
+    scale = 1/(jnp.max(x_coords) - jnp.min(x_coords))
     # normalize
     if normalize:
-        x_coords = (x_coords - jnp.min(x_coords))/(jnp.max(x_coords) - jnp.min(x_coords))
-        y_coords = (y_coords - jnp.min(y_coords))/(jnp.max(y_coords) - jnp.min(y_coords))
+        x_coords = (x_coords - jnp.min(x_coords)) * scale
+        y_coords = (y_coords - jnp.min(y_coords)) * scale
 
     coords = jnp.dstack((x_coords, y_coords))[0]
     x = coords

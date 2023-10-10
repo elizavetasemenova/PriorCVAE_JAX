@@ -15,3 +15,6 @@ build/
 *wandb/
 *outputs/
 *data/
+*.tex
+*.pdf
+*.pkl
