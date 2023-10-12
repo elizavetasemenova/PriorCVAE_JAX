@@ -1,0 +1,59 @@
+data_generator:
+  _target_: priorCVAE.datasets.SIRDataset
+  z_init:
+    _target_: jax.numpy.array
+    object:
+    - 762
+    - 1.0
+    - 0.0
+  num_days: ${num_days}
+  normalize: ${normalize}
+model:
+  encoder:
+    _target_: priorCVAE.models.MLPEncoder
+    _partial_: true
+    activations: ${enc_activation}
+  decoder:
+    _target_: priorCVAE.models.MLPDecoder
+    _partial_: true
+    activations: ${dec_activation}
+  vae:
+    _target_: priorCVAE.models.VAE
+    _partial_: true
+trainer:
+  _target_: priorCVAE.trainer.VAETrainer
+  _partial_: true
+optimizer:
+  learning_rate:
+    _target_: optax.exponential_decay
+    init_value: 0.001
+    transition_steps: ${iterations}
+    decay_rate: 0.98
+  _target_: optax.adam
+loss:
+  _target_: priorCVAE.losses.SquaredSumAndKL
+  conditional: ${conditional}
+  vae_var: ${vae_var}
+enc_activation:
+  _target_: flax.linen.leaky_relu
+  _partial_: true
+dec_activation:
+  _target_: flax.linen.leaky_relu
+  _partial_: true
+num_days: 14
+hidden_dim: 10
+latent_dim: 6
+batch_size: 2000
+iterations: 5000
+conditional: true
+vae_var: 1.0
+debug: true
+kl_scaling: 0.1
+reconstruction_scaling: 0.1
+wandb:
+  username: vermaprakhar
+  project: PriorCVAE
+  tags:
+  - SIR Prior
+load_model_path: outputs/9pmmxedc/model
+normalize: true
