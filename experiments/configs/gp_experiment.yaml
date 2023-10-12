@@ -29,8 +29,8 @@ debug: True
 sample_kernel: False
 
 plot_ls: 0.3
-kl_scaling: 0.1
-reconstruction_scaling: 0.1
+kl_scaling: 1.
+reconstruction_scaling: 1.
 
 wandb:
   username: null

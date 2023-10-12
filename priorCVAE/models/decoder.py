@@ -31,6 +31,7 @@ class MLPDecoder(Decoder):
     hidden_dim: Union[Tuple[int], int]
     out_dim: int
     activations: Union[Tuple, PjitFunction] = nn.sigmoid
+    last_layer_activation: PjitFunction = None
 
     @nn.compact
     def __call__(self, z: jnp.ndarray) -> jnp.ndarray:
@@ -43,6 +44,10 @@ class MLPDecoder(Decoder):
             z = nn.Dense(hidden_dim, name=f"dec_hidden_{i}")(z)
             z = activation_fn(z)
         z = nn.Dense(self.out_dim, name="dec_out")(z)
+
+        if self.last_layer_activation is not None:
+            z = self.last_layer_activation(z)
+
         return z
 
 

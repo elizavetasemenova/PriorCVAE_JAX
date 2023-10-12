@@ -36,15 +36,17 @@ class SquaredSumAndKL(Loss):
     Loss function with scaled sum squared loss and KL.
     """
 
-    def __init__(self, conditional: bool = False, vae_var: float = 1.0):
+    def __init__(self, conditional: bool = False, vae_var: float = 1.0, reconstruction_scaling: float = 1.):
         """
         Initialize the SquaredSumAndKL loss.
 
         :param conditional: a variable to specify if conditional version is getting trained or not.
         :param vae_var: value for VAE variance used to calculate the Squared loss. Default value is 1.0.
+        :param reconstruction_scaling: a float value representing the scaling value for the reconstruction term.
         """
         super().__init__(conditional)
         self.vae_var = vae_var
+        self.reconstruction_loss_scale = reconstruction_scaling
 
     @partial(jax.jit, static_argnames=['self'])
     def __call__(self, state_params: FrozenDict, state: TrainState, batch: [jnp.ndarray, jnp.ndarray, jnp.ndarray],
@@ -62,7 +64,7 @@ class SquaredSumAndKL(Loss):
         y_hat, z_mu, z_logvar = state.apply_fn({'params': state_params}, y, z_rng, c=c)
         rcl_loss = scaled_sum_squared_loss(y, y_hat, vae_var=self.vae_var)
         kld_loss = kl_divergence(z_mu, z_logvar)
-        loss = rcl_loss + kld_loss
+        loss = self.reconstruction_loss_scale * rcl_loss + kld_loss
         return loss, {"KLD": kld_loss, "Reconstruction": rcl_loss}
 
 

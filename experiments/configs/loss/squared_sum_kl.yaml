@@ -1,3 +1,4 @@
 _target_: priorCVAE.losses.SquaredSumAndKL
 conditional: ${conditional}
 vae_var: ${vae_var}
+reconstruction_scaling: ${reconstruction_scaling}
