@@ -52,7 +52,7 @@ def run_experiment(cfg: DictConfig):
         decoder_hidden_dim = cfg.hidden_dim
     output_dim = y_test.shape[-1]
     decoder = instantiate(cfg.model.decoder)(hidden_dim=decoder_hidden_dim, out_dim=output_dim)
-    decoder.dec_last_layer_activation = nn.sigmoid
+    decoder.last_layer_activation = nn.sigmoid
     vae = instantiate(cfg.model.vae)(encoder=encoder, decoder=decoder)
     log.info(f"VAE model initialized...")
     log.info(f"---------------------------------------------")
