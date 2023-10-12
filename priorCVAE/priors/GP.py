@@ -82,12 +82,12 @@ def GP_RBF_Linear(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter:
             kernel.lengthscale = lengthscale_options[idx]
 
         # Linear
-        c_lin = numpyro.sample("c_lin", npdist.Uniform(0.2, 0.8))
+        # c_lin = numpyro.sample("c_lin", npdist.Uniform(0.2, 0.8))
 
     k_rbf = kernel(x, x)
     k_rbf += jitter * jnp.eye(x.shape[0])
 
-    k_lin = lin_kernel(x, x, c_lin)
+    k_lin = lin_kernel(x, x, 0.4)
 
     k = jnp.multiply(k_lin, k_rbf)
 
@@ -98,5 +98,5 @@ def GP_RBF_Linear(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter:
         f = numpyro.sample("f", npdist.MultivariateNormal(loc=jnp.zeros(x.shape[0]), covariance_matrix=k))
         y = numpyro.sample("y", npdist.Normal(f, sigma), obs=y)
 
-    ls = jnp.concatenate([jnp.array([kernel.lengthscale]), jnp.array([c_lin])], axis=0)
-    ls = numpyro.deterministic("ls", ls)
+    # ls = jnp.concatenate([jnp.array([kernel.lengthscale]), jnp.array([c_lin])], axis=0)
+    ls = numpyro.deterministic("ls", jnp.array([kernel.lengthscale]))

@@ -1,5 +1,5 @@
 defaults:
-  - kernel@prior: squared_exponential
+  - kernel@prior: matern1
   - data_generator: gp_data_generator
   - model/encoder: mlp_encoder
   - model/decoder: mlp_decoder

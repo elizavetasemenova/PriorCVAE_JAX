@@ -21,16 +21,34 @@ def read_data(file_path: str, normalize=True) -> (jnp.ndarray, gpd.GeoDataFrame)
     x_coords = jnp.array(centroids["x"])
     y_coords = jnp.array(centroids["y"])
 
-    scale = 1/(jnp.max(x_coords) - jnp.min(x_coords))
-    # normalize
     if normalize:
-        x_coords = (x_coords - jnp.min(x_coords)) * scale
-        y_coords = (y_coords - jnp.min(y_coords)) * scale
+        x_coords, y_coords = preprocess_data(x_coords, y_coords)
 
     coords = jnp.dstack((x_coords, y_coords))[0]
     x = coords
 
     return x, data_frame
+
+
+def preprocess_data(x_coords, y_coords):
+    """Preprocess the data."""
+    # Choose a reference point
+    x_min = jnp.min(x_coords)
+    y_min = jnp.min(y_coords)
+    x_max = jnp.max(x_coords)
+    y_max = jnp.max(y_coords)
+
+    # y = latitude
+
+    pnt_reference = (x_min + (x_max-x_min)/2, y_min + (y_max-y_min)/2, 0)
+    y_coords, x_coords, _ = pm.geodetic2enu(y_coords, x_coords, 0, pnt_reference[1], pnt_reference[0], 0)
+
+    scale = 1/(jnp.max(x_coords) - jnp.min(x_coords))
+
+    x_coords = (x_coords - jnp.min(x_coords)) * scale
+    y_coords = (y_coords - jnp.min(y_coords)) * scale
+
+    return x_coords, y_coords
 
 
 def plot_prior_samples(data_frame: gpd.GeoDataFrame, y, n: int = 5, output_dir: str = ""):
@@ -125,3 +143,12 @@ def plot_statistics(gp_samples: jnp.ndarray, vae_samples: jnp.ndarray, output_di
         wandb.log({"Statistics": wandb.Image(plt)})
 
     plt.show()
+
+#
+# if __name__ == '__main__':
+#     coords, _ = read_data("data/zwe2016phia.geojson", normalize=True)
+#
+#     # save both x_coords and y_coords in a single CSV file
+#     import numpy as np
+#     np.savetxt("data/zwe2016phia.csv", np.column_stack((coords[:, 0], coords[:, 1])), delimiter=",")
+#

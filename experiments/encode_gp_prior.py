@@ -63,7 +63,7 @@ def run_experiment(cfg: DictConfig):
 
     log_args = {"plot_mean": True, "x_val": x, "ls_prior": data_generator.lengthscale_prior,
                 "output_dir": output_dir, "sample_kernel": cfg.sample_kernel,
-                "c_dim": 1 if cfg.prior_type == "stationary" else 2}
+                "c_dim": 1}
     trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, wandb_log_decoder_fn=wandb_log_decoder_samples,
                                        log_args=log_args)
 
@@ -94,7 +94,7 @@ def run_experiment(cfg: DictConfig):
     plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=cfg.plot_ls,
                          latent_dim=cfg.latent_dim, x_val=x_test[0], n=15, output_dir=output_dir,
                          conditional=cfg.conditional, sample_kernel=cfg.sample_kernel,
-                         c_dim=1 if cfg.prior_type == "stationary" else 2)
+                         c_dim=1)
 
     if wandb.run:
         output_dir = move_wandb_hydra_files(output_dir)  # Move files to a different folder with wandb run id

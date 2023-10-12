@@ -4,6 +4,8 @@ File contains the code for Gaussian processes kernels.
 
 from abc import ABC, abstractmethod
 import jax.numpy as jnp
+import sklearn.gaussian_process.kernels
+
 from priorCVAE.utility import sq_euclidean_dist
 
 
@@ -198,5 +200,34 @@ class Matern12(Kernel):
         dist = jnp.sqrt(sq_euclidean_dist(x1, x2))
 
         k = self.variance * jnp.exp(-dist)
+        assert k.shape == (x1.shape[0], x2.shape[0])
+        return k
+
+
+class Matern1(Kernel):
+    """
+    Matern 1 Kernel.
+    """
+
+    def __init__(self, lengthscale: float = 1.0, variance: float = 1.0):
+        super().__init__(lengthscale, variance)
+
+    def __call__(self, x1: jnp.ndarray, x2: jnp.ndarray) -> jnp.ndarray:
+        """
+        Calculates the kernel value for x1 and x2.
+
+        :param x1: Jax ndarray of the shape `(N1, D)`.
+        :param x2: Jax ndarray of the shape `(N2, D)`.
+
+        :return: kernel matrix of the shape `(N1, N2)`.
+
+        """
+        x1 = self._handle_input_shape(x1)
+        x2 = self._handle_input_shape(x2)
+        assert x1.shape[-1] == x2.shape[-1]
+        x1 = self._scale_by_lengthscale(x1)
+        x2 = self._scale_by_lengthscale(x2)
+
+        k = self.variance * sklearn.gaussian_process.kernels.Matern(length_scale=self.lengthscale, nu=1.0)(x1, x2)
         assert k.shape == (x1.shape[0], x2.shape[0])
         return k
