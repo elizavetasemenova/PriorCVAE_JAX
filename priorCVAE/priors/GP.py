@@ -48,7 +48,7 @@ def GP(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter: float = 1e
 
 def GP_RBF_Linear(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter: float = 1e-5, y=None,
                   noise: bool = False, sample_lengthscale: bool = False, lengthscale_options: jnp.ndarray = None,
-                  lengthscale_prior: npdist.Distribution = npdist.Uniform(0.01, 0.99)):
+                  lengthscale_prior: npdist.Distribution = npdist.Uniform(0.01, 0.99), c_lin: float = 0.5):
     """
     Gaussian process numpyro primitive to generate samples from it.
 
@@ -62,6 +62,7 @@ def GP_RBF_Linear(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter:
     :param lengthscale_options: a jnp.ndarray of lengthscale options to choose from.
     :param lengthscale_prior: a npdist distribution to sample the legnthscale from. Defaults to a
                               Uniform distribution, U(0.01, 0.99).
+    :param c_lin: float value for the linear kernel.
     """
 
     def lin_kernel(x, z, c_lin=0.5, noise=0, jitter=1e-6):
@@ -75,16 +76,17 @@ def GP_RBF_Linear(x: jnp.ndarray, kernel: Kernel = SquaredExponential(), jitter:
 
     if sample_lengthscale:
         if lengthscale_options is None:
-            kernel.lengthscale = numpyro.sample("lengthscale", lengthscale_prior)
+            kernel.lengthscale = numpyro.sample("lengthscale", npdist.Uniform(0.01, 0.4))
         else:
             idx = numpyro.sample("lengthscale", npdist.discrete.DiscreteUniform(0, lengthscale_options.shape[0] - 1))
             kernel.lengthscale = lengthscale_options[idx]
 
+        # Linear
+        c_lin = numpyro.sample("c_lin", npdist.Uniform(0.2, 0.8))
+
     k_rbf = kernel(x, x)
     k_rbf += jitter * jnp.eye(x.shape[0])
 
-    # Linear
-    c_lin = numpyro.sample("c_lin", npdist.Uniform(0.2, 0.8))
     k_lin = lin_kernel(x, x, c_lin)
 
     k = jnp.multiply(k_lin, k_rbf)
