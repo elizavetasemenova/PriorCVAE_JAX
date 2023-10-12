@@ -4,7 +4,6 @@ File contains the code for Gaussian processes kernels.
 
 from abc import ABC, abstractmethod
 import jax.numpy as jnp
-import sklearn.gaussian_process.kernels
 
 from priorCVAE.utility import sq_euclidean_dist
 
@@ -212,6 +211,19 @@ class Matern1(Kernel):
     def __init__(self, lengthscale: float = 1.0, variance: float = 1.0):
         super().__init__(lengthscale, variance)
 
+    def phi(self, t):
+        return jnp.exp(jnp.pi / 2 * jnp.sinh(t))
+
+    def dphi(self, t):
+        return jnp.pi / 2 * jnp.cosh(t) * jnp.exp(jnp.pi / 2 * jnp.sinh(t))
+
+    def bessel_k(self, nu, z):
+        z = jnp.asarray(z)[..., None]
+        t = jnp.linspace(-3, 3, 101)[None, :]
+        integrand = (0.5 * (0.5 * z) ** nu * jnp.exp(-self.phi(t) - z ** 2 / (4 * self.phi(t))) * self.phi(t) ** (-nu - 1) * self.dphi(t))
+
+        return jnp.trapz(integrand, x=t, axis=-1)
+
     def __call__(self, x1: jnp.ndarray, x2: jnp.ndarray) -> jnp.ndarray:
         """
         Calculates the kernel value for x1 and x2.
@@ -228,6 +240,26 @@ class Matern1(Kernel):
         x1 = self._scale_by_lengthscale(x1)
         x2 = self._scale_by_lengthscale(x2)
 
-        k = self.variance * sklearn.gaussian_process.kernels.Matern(length_scale=self.lengthscale, nu=1.0)(x1, x2)
+        dist = jnp.sqrt(sq_euclidean_dist(x1, x2))
+        term1 = jnp.sqrt(2) * dist
+
+        term2 = self.bessel_k(1, term1)
+        # term2 = self._modified_bessel_second_kind(term1, 1) #scipy.special.kv(1, term1)
+
+        k = self.variance * term1 * term2
         assert k.shape == (x1.shape[0], x2.shape[0])
         return k
+
+# if __name__ == '__main__':
+#     k = Matern1(lengthscale=.3, variance=.5)
+#
+#     x1 = .4 * jnp.ones((2, 1))
+#     x2 = .8 * jnp.ones((2, 1))
+#     vals = k(x1, x2)
+#
+#     ker = sklearn.gaussian_process.kernels.Matern(length_scale=.3, nu=1)
+#     expected_vals = .5 * ker(x1, x2)
+#
+#     print(vals)
+#     print(expected_vals)
+#     print(jnp.allclose(vals, expected_vals))
