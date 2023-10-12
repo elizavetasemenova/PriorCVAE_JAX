@@ -18,3 +18,5 @@ build/
 *.tex
 *.pdf
 *.pkl
+*.npz
+*.png

@@ -34,14 +34,14 @@ def run_experiment(cfg: DictConfig):
 
     # Data generator
     x = create_grid(n_data=cfg.n_data, lim_low=cfg.x0, lim_high=cfg.x1, dim=1)
-    data_generator = instantiate(cfg.data_generator)(x=x)
+    data_generator = instantiate(cfg.data_generator)(x=x, prior_type=cfg.prior_type)
     batch_x_train, batch_y_train, batch_ls_train = data_generator.simulatedata(n_samples=cfg.batch_size)
     x_test, y_test, ls_test = data_generator.simulatedata(n_samples=cfg.batch_size)
     log.info(f"Data generator initialized...")
     log.info(f"---------------------------------------------")
 
     # Plot samples
-    plot_gp_samples(batch_x_train, batch_y_train, batch_ls_train[:, :1], output_dir=output_dir)
+    plot_gp_samples(batch_x_train, batch_y_train, batch_ls_train[:, :1], output_dir= output_dir)
     plot_lengthscales(batch_ls_train[:, :1], ls_test[:, :1], output_dir=output_dir)
 
     # Model
@@ -62,7 +62,8 @@ def run_experiment(cfg: DictConfig):
     loss = instantiate(cfg.loss)
 
     log_args = {"plot_mean": True, "x_val": x, "ls_prior": data_generator.lengthscale_prior,
-                "output_dir": output_dir, "sample_kernel": cfg.sample_kernel}
+                "output_dir": output_dir, "sample_kernel": cfg.sample_kernel,
+                "c_dim": 1 if cfg.prior_type == "stationary" else 2}
     trainer = instantiate(cfg.trainer)(vae, optimizer, loss=loss, wandb_log_decoder_fn=wandb_log_decoder_samples,
                                        log_args=log_args)
 
@@ -92,7 +93,8 @@ def run_experiment(cfg: DictConfig):
     trained_decoder_params = trainer.state.params["decoder"]
     plot_decoder_samples(decoder, decoder_params=trained_decoder_params, ls=cfg.plot_ls,
                          latent_dim=cfg.latent_dim, x_val=x_test[0], n=15, output_dir=output_dir,
-                         conditional=cfg.conditional, sample_kernel=cfg.sample_kernel)
+                         conditional=cfg.conditional, sample_kernel=cfg.sample_kernel,
+                         c_dim=1 if cfg.prior_type == "stationary" else 2)
 
     if wandb.run:
         output_dir = move_wandb_hydra_files(output_dir)  # Move files to a different folder with wandb run id

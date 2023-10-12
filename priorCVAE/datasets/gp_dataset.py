@@ -13,7 +13,8 @@ from numpyro.infer import Predictive
 from omegaconf import ListConfig
 import numpyro.distributions as npdist
 
-from priorCVAE.priors import GP, Kernel, Matern12, Matern52
+from priorCVAE.priors import GP, Kernel, Matern12, Matern52, GP_RBF_Linear
+
 
 
 class GPDataset:
@@ -25,7 +26,7 @@ class GPDataset:
     def __init__(self, kernel: Kernel, x: jnp.ndarray, sample_lengthscale: bool = False,
                  lengthscale_options: Union[List, jnp.ndarray] = None,
                  lengthscale_prior: npdist.Distribution = npdist.Uniform(0.01, 0.99),
-                 sample_kernel: bool = False):
+                 sample_kernel: bool = False, prior_type: str = "stationary"):
         """
         Initialize the Gaussian Process dataset class.
 
@@ -37,6 +38,7 @@ class GPDataset:
                               Uniform distribution, U(0.01, 0.99).
         :param sample_kernel: if True, sample kernel.
                               NOTE: This currently only works for Matern12 and Matern52.
+        :param model: Model to use. Defaults to "stationary".
         """
         self.sample_lengthscale = sample_lengthscale
         self.kernel = kernel
@@ -46,6 +48,11 @@ class GPDataset:
         self.lengthscale_options = lengthscale_options
         self.lengthscale_prior = lengthscale_prior
         self.sample_kernel = sample_kernel
+
+        if prior_type == "stationary":
+            self.prior_type = GP
+        else:
+            self.prior_type = GP_RBF_Linear
 
     def simulatedata(self, n_samples: int = 10000) -> [jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """
@@ -68,7 +75,7 @@ class GPDataset:
             else:
                 self.kernel = Matern52()
 
-        gp_predictive = Predictive(GP, num_samples=n_samples)
+        gp_predictive = Predictive(self.prior_type, num_samples=n_samples)
         all_draws = gp_predictive(rng_key, x=self.x, kernel=self.kernel, jitter=1e-5,
                                   sample_lengthscale=self.sample_lengthscale,
                                   lengthscale_options=self.lengthscale_options,

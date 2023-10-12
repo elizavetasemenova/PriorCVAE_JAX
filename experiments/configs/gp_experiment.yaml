@@ -16,6 +16,7 @@ x0: 0
 x1: 1
 sample_lengthscale: True
 discrete_ls: null
+prior_type: "stationary"  # "stationary, non_stationary
 
 hidden_dim: 60
 latent_dim: 40
