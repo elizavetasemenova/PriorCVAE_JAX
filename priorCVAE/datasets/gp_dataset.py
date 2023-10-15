@@ -26,7 +26,7 @@ class GPDataset:
     def __init__(self, kernel: Kernel, x: jnp.ndarray, sample_lengthscale: bool = False,
                  lengthscale_options: Union[List, jnp.ndarray] = None,
                  lengthscale_prior: npdist.Distribution = npdist.Uniform(0.01, 0.99),
-                 sample_kernel: bool = False, prior_type: str = "stationary"):
+                 sample_kernel: bool = False, prior_type: str = "stationary", c_lin: float = None):
         """
         Initialize the Gaussian Process dataset class.
 
@@ -49,6 +49,7 @@ class GPDataset:
         self.lengthscale_prior = lengthscale_prior
         self.sample_kernel = sample_kernel
 
+        self.c_lin = c_lin
         if prior_type == "stationary":
             self.prior_type = GP
         else:
@@ -76,10 +77,17 @@ class GPDataset:
                 self.kernel = Matern52()
 
         gp_predictive = Predictive(self.prior_type, num_samples=n_samples)
-        all_draws = gp_predictive(rng_key, x=self.x, kernel=self.kernel, jitter=1e-5,
-                                  sample_lengthscale=self.sample_lengthscale,
-                                  lengthscale_options=self.lengthscale_options,
-                                  lengthscale_prior=self.lengthscale_prior)
+
+        if self.c_lin is None:
+            all_draws = gp_predictive(rng_key, x=self.x, kernel=self.kernel, jitter=1e-5,
+                                      sample_lengthscale=self.sample_lengthscale,
+                                      lengthscale_options=self.lengthscale_options,
+                                      lengthscale_prior=self.lengthscale_prior)
+        else:
+            all_draws = gp_predictive(rng_key, x=self.x, kernel=self.kernel, jitter=1e-5,
+                                      sample_lengthscale=self.sample_lengthscale,
+                                      lengthscale_options=self.lengthscale_options,
+                                      lengthscale_prior=self.lengthscale_prior, c_lin=self.c_lin)
 
         ls_draws = jnp.array(all_draws['ls'])
         if self.sample_kernel:

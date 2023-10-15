@@ -1,5 +1,5 @@
 defaults:
-  - kernel@prior: squared_exponential
+  - kernel@prior: matern12
   - data_generator: gp_data_generator
   - model/encoder: mlp_encoder
   - model/decoder: mlp_decoder
@@ -8,9 +8,9 @@ defaults:
   - optimizer: adam
   - loss: squared_sum_kl
   - kernel@mmd: squared_exponential
-  - model/activations@enc_activation: tanh
-  - model/activations@dec_activation: tanh
-  - distributions@prior_ls: gamma
+  - model/activations@enc_activation: leaky_relu
+  - model/activations@dec_activation: leaky_relu
+  - distributions@prior_ls: uniform
 
 sample_lengthscale: True
 discrete_ls: null
@@ -25,8 +25,8 @@ vae_var: 1.0
 debug: True
 
 plot_ls: 0.3
-kl_scaling: 0.1
-reconstruction_scaling: 0.1
+kl_scaling: 1.
+reconstruction_scaling: 1.
 
 wandb:
   username: null
@@ -35,5 +35,5 @@ wandb:
 
 data_shp_path: ???
 load_model_path: ""
-normalize : False
+normalize : True
 sample_kernel: False

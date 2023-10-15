@@ -132,7 +132,7 @@ def gp_mcmc_inference_model(args, gp_kernel):
     gp_kernel.lengthscale = ls
 
     k = gp_kernel(x, x)
-    # k += 1e-6 * jnp.eye(x.shape[0])
+    k += 1e-6 * jnp.eye(x.shape[0])
     # print(k.shape)
 
     f = numpyro.sample("f", npdist.MultivariateNormal(loc=jnp.zeros(x.shape[0]), covariance_matrix=k))
