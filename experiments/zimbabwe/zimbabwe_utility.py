@@ -1,6 +1,6 @@
 import random
 
-#import pymap3d as pm
+import pymap3d as pm
 #import wandb
 import jax
 import jax.numpy as jnp
