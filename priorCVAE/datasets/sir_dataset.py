@@ -17,7 +17,9 @@ class SIRDataset:
     Generate SIR draws.
     """
 
-    def __init__(self, z_init: jnp.ndarray, num_days: int, beta=None, gamma=None, normalize: bool = True):
+    def __init__(self, z_init: jnp.ndarray, num_days: int, beta=None, gamma=None, normalize: bool = True,
+                 beta_prior=npdist.TruncatedNormal(loc=2, scale=1, low=0.),
+                 gamma_prior=npdist.TruncatedNormal(loc=0.4, scale=0.5, low=0.)):
         """
         Initialize the SIR dataset class.
 
@@ -30,6 +32,8 @@ class SIRDataset:
         self.gamma = gamma
         self.normalize = normalize
         self.population_size = 763
+        self.beta_prior = beta_prior
+        self.gamma_prior = gamma_prior
 
     def simulatedata(self, n_states: int = 3, n_samples: int = 1000, observed_data=None) -> [jnp.ndarray, jnp.ndarray,
                                                                                               jnp.ndarray]:
@@ -49,7 +53,8 @@ class SIRDataset:
         rng_key = jax.random.PRNGKey(random.randint(0, 9999))
         sir_simulation = sir_predictive(rng_key=rng_key,
                                         beta=self.beta, gamma=self.gamma, time=self.time,
-                                        observed_data=observed_data, z_init=self.z_init, n_states=n_states)
+                                        observed_data=observed_data, z_init=self.z_init, n_states=n_states,
+                                        beta_prior=self.beta_prior, gamma_prior=self.gamma_prior)
 
         z = sir_simulation['z']
         # observations = sir_simulation['observed']

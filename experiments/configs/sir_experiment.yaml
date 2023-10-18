@@ -8,6 +8,8 @@ defaults:
   - loss: squared_sum_kl
   - model/activations@enc_activation: leaky_relu
   - model/activations@dec_activation: leaky_relu
+  - distributions@beta_prior: uniform
+  - distributions@gamma_prior: uniform
 
 num_days: 14
 hidden_dim: 10
@@ -29,3 +31,11 @@ wandb:
 
 load_model_path: ""
 normalize: True
+
+beta_prior:
+  low: 0
+  high: 4
+
+gamma_prior:
+  low: 0
+  high: 1.5

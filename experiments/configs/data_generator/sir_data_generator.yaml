@@ -4,3 +4,5 @@ z_init:
   object: [762, 1.0, 0.0]
 num_days: ${num_days}
 normalize: ${normalize}
+beta_prior: ${beta_prior}
+gamma_prior: ${gamma_prior}
