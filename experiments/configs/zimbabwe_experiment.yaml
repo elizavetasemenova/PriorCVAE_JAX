@@ -37,3 +37,4 @@ data_shp_path: ???
 load_model_path: ""
 normalize : True
 sample_kernel: False
+enu_coordinates: True

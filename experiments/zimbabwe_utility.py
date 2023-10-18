@@ -1,14 +1,14 @@
 import random
 
+import wandb
 import pymap3d as pm
-#import wandb
 import jax
 import jax.numpy as jnp
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
 
-def read_data(file_path: str, normalize=True) -> (jnp.ndarray, gpd.GeoDataFrame):
+def read_data(file_path: str, normalize: bool = True, enu_coordinates: bool = True) -> (jnp.ndarray, gpd.GeoDataFrame):
     """Read a shapefile and return the x coordinates along with the GeoDataFrame"""
     data_frame = gpd.read_file(file_path)
     data_frame['area_id'] = data_frame.index + 1
@@ -22,7 +22,7 @@ def read_data(file_path: str, normalize=True) -> (jnp.ndarray, gpd.GeoDataFrame)
     y_coords = jnp.array(centroids["y"])
 
     if normalize:
-        x_coords, y_coords = preprocess_data(x_coords, y_coords)
+        x_coords, y_coords = preprocess_data(x_coords, y_coords, enu_coordinates)
 
     coords = jnp.dstack((x_coords, y_coords))[0]
     x = coords
@@ -30,7 +30,7 @@ def read_data(file_path: str, normalize=True) -> (jnp.ndarray, gpd.GeoDataFrame)
     return x, data_frame
 
 
-def preprocess_data(x_coords, y_coords):
+def preprocess_data(x_coords, y_coords, enu_coordinates: bool = True):
     """Preprocess the data."""
     # Choose a reference point
     x_min = jnp.min(x_coords)
@@ -39,11 +39,11 @@ def preprocess_data(x_coords, y_coords):
     y_max = jnp.max(y_coords)
 
     # y = latitude
+    if enu_coordinates:
+        pnt_reference = (x_min + (x_max - x_min) / 2, y_min + (y_max - y_min) / 2, 0)
+        y_coords, x_coords, _ = pm.geodetic2enu(y_coords, x_coords, 0, pnt_reference[1], pnt_reference[0], 0)
 
-    pnt_reference = (x_min + (x_max-x_min)/2, y_min + (y_max-y_min)/2, 0)
-    y_coords, x_coords, _ = pm.geodetic2enu(y_coords, x_coords, 0, pnt_reference[1], pnt_reference[0], 0)
-
-    scale = 1/(jnp.max(x_coords) - jnp.min(x_coords))
+    scale = 1 / (jnp.max(x_coords) - jnp.min(x_coords))
 
     x_coords = (x_coords - jnp.min(x_coords)) * scale
     y_coords = (y_coords - jnp.min(y_coords)) * scale
@@ -66,8 +66,8 @@ def plot_prior_samples(data_frame: gpd.GeoDataFrame, y, n: int = 5, output_dir: 
     if output_dir != "":
         plt.savefig(f"{output_dir}/prior_samples.png")
 
-    #if wandb.run:
-    #    wandb.log({"Prior Samples": wandb.Image(plt)})
+    if wandb.run:
+        wandb.log({"Prior Samples": wandb.Image(plt)})
 
     plt.show()
 
@@ -104,8 +104,8 @@ def plot_decoder_samples(data_frame: gpd.GeoDataFrame, decoder, decoder_params, 
     if output_dir != "":
         plt.savefig(f"{output_dir}/decoder_samples.png")
 
-    #if wandb.run:
-    #    wandb.log({"Decoder Samples": wandb.Image(plt)})
+    if wandb.run:
+        wandb.log({"Decoder Samples": wandb.Image(plt)})
 
     plt.show()
 
@@ -139,16 +139,7 @@ def plot_statistics(gp_samples: jnp.ndarray, vae_samples: jnp.ndarray, output_di
     if output_dir != "":
         plt.savefig(f"{output_dir}/statistics.png")
 
-    #if wandb.run:
-    #    wandb.log({"Statistics": wandb.Image(plt)})
+    if wandb.run:
+        wandb.log({"Statistics": wandb.Image(plt)})
 
     plt.show()
-
-#
-# if __name__ == '__main__':
-#     coords, _ = read_data("data/zwe2016phia.geojson", normalize=True)
-#
-#     # save both x_coords and y_coords in a single CSV file
-#     import numpy as np
-#     np.savetxt("data/zwe2016phia.csv", np.column_stack((coords[:, 0], coords[:, 1])), delimiter=",")
-#

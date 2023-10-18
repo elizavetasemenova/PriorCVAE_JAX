@@ -35,7 +35,7 @@ def run_experiment(cfg: DictConfig):
     log.info(f"---------------------------------------------")
 
     # Data generator
-    x, data_frame = read_data(cfg.data_shp_path, normalize=cfg.normalize)
+    x, data_frame = read_data(cfg.data_shp_path, normalize=cfg.normalize, enu_coordinates=cfg.enu_coordinates)
 
     ls_prior = instantiate(cfg.prior_ls)
     data_generator = instantiate(cfg.data_generator)(x=x, lengthscale_prior=ls_prior)
