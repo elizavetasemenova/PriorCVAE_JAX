@@ -20,3 +20,4 @@ build/
 *.pkl
 *.npz
 *.png
+*paper_models/
