@@ -1,0 +1,40 @@
+defaults:
+  - sde@prior: double_well
+  - data_generator: sde_data_generator
+  - model/encoder: mlp_encoder
+  - model/decoder: mlp_decoder
+  - model/vae: vae
+  - trainer: vae_trainer
+  - optimizer: adam
+  - kernel@mmd: squared_exponential
+  - loss: squared_sum_kl
+  - model/activations@enc_activation: sigmoid
+  - model/activations@dec_activation: sigmoid
+
+n_data: 2000
+x0: 0
+x1: 20
+
+hidden_dim: [1000, 500, 100]
+latent_dim: 50
+
+batch_size: 2000
+iterations: 500
+conditional: True
+vae_var: 1.
+debug: True
+
+kl_scaling: 1.
+reconstruction_scaling: 1.
+
+wandb:
+  username: null
+  project: "PriorCVAE"
+  tags: ["GP Prior"]
+
+load_model_path: ""
+
+a: 2
+c: 3
+q: 3
+x_init: 1

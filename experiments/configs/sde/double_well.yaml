@@ -1,0 +1,4 @@
+_target_: priorCVAE.priors.DoubleWellSDE
+a: ${a}
+c: ${c}
+q: ${q}

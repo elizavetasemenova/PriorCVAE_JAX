@@ -1,0 +1,3 @@
+_target_: priorCVAE.datasets.SDEDataset
+base_sde: ${prior}
+_partial_: True
