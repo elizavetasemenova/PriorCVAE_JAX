@@ -23,7 +23,7 @@ from zimbabwe_utility import read_data, plot_prior_samples, plot_statistics, plo
 log = logging.getLogger(__name__)
 
 
-@hydra.main(version_base="1.2", config_path="../configs/", config_name="zimbabwe_experiment")
+@hydra.main(version_base="1.2", config_path="configs/", config_name="zimbabwe_experiment")
 def run_experiment(cfg: DictConfig):
     output_dir = get_hydra_output_dir()
 
