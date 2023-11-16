@@ -49,7 +49,10 @@ def plot_lengthscales(train_lengthscale, test_lengthscale, output_dir: str = "")
     plt.figure(figsize=(4, 3))
     plt.hist(train_lengthscale[:, 0], alpha=0.3, label='train ls')
     plt.hist(test_lengthscale[:, 0], alpha=0.3, label='test ls')
-    plt.xlim(0, 1)
+
+    x_min = min(train_lengthscale[:, 0].min(), test_lengthscale[:, 0].min())
+    x_max = max(train_lengthscale[:, 0].max(), test_lengthscale[:, 0].max())
+    plt.xlim(x_min, x_max)
     plt.legend()
 
     if output_dir != "":
