@@ -141,7 +141,7 @@ class VAETrainer:
                         wandb.log({key: val}, step=iterations)
                     wandb.log({"Test Loss": loss_test[-1]}, step=iterations)
 
-                    if iterations % 50 == 0:
+                    if iterations % 500 == 0:
                         self.wandb_log_decoder_fn(decoder=self.model.decoder,
                                                   decoder_params=self.state.params["decoder"],
                                                   latent_dim=self.model.encoder.latent_dim,
