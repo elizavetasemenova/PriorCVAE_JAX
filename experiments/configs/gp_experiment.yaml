@@ -14,6 +14,7 @@ defaults:
 n_data: 80
 x0: 0
 x1: 1
+x_dim: 1
 sample_lengthscale: True
 discrete_ls: null
 prior_type: "stationary"  # "stationary, non_stationary

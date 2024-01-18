@@ -33,7 +33,7 @@ def run_experiment(cfg: DictConfig):
     log.info(f"---------------------------------------------")
 
     # Data generator
-    x = create_grid(n_data=cfg.n_data, lim_low=cfg.x0, lim_high=cfg.x1, dim=1)
+    x = create_grid(n_data=cfg.n_data, lim_low=cfg.x0, lim_high=cfg.x1, dim=cfg.x_dim)
     data_generator = instantiate(cfg.data_generator)(x=x, prior_type=cfg.prior_type)
     batch_x_train, batch_y_train, batch_ls_train = data_generator.simulatedata(n_samples=cfg.batch_size)
     x_test, y_test, ls_test = data_generator.simulatedata(n_samples=cfg.batch_size)

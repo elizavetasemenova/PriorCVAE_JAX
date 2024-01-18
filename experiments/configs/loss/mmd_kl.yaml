@@ -2,4 +2,3 @@ _target_: priorCVAE.losses.MMDAndKL
 conditional: ${conditional}
 kl_scaling: ${kl_scaling}
 kernel: ${mmd}
-reconstruction_scaling: ${reconstruction_scaling}
