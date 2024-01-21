@@ -16,7 +16,7 @@ from priorCVAE.models import Decoder
 
 
 def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict, c: jnp.array = None,
-                             conditional: bool = False):
+                             conditional: bool = False, c_prior=npdist.Uniform(0.01, 0.99)):
     """
     VAE numpyro model used for running MCMC inference.
 
@@ -25,6 +25,7 @@ def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict,
     :param decoder_params: a dictionary with decoder network parameters.
     :param c: a Jax ndarray used for cVAE of the shape, (N, C).
     :param conditional: if True, concatenate the condition to latent vector.
+    :param c_prior: a numpyro distribution used for prior of c.
     """
 
     z_dim = args["latent_dim"]
@@ -34,7 +35,7 @@ def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict,
     z = numpyro.sample("z", npdist.Normal(jnp.zeros(z_dim), jnp.ones(z_dim)))  # (Z_dim,)
 
     if (c is None) and (conditional is True):
-        c = numpyro.sample("c", npdist.Uniform(0.01, 0.99), sample_shape=(1, ))
+        c = numpyro.sample("c", c_prior, sample_shape=(1, ))
         z = jnp.concatenate([z, c], axis=0)  # (Z_dim + C, )
 
     f = numpyro.deterministic("f", decoder.apply({'params': decoder_params}, z))
@@ -47,7 +48,8 @@ def vae_mcmc_inference_model(args: Dict, decoder: Decoder, decoder_params: Dict,
 
 
 def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decoder: Decoder, decoder_params: Dict,
-                 c: jnp.array = None, verbose: bool = True, conditional: bool = True) -> [MCMC, jnp.ndarray, float]:
+                 c: jnp.array = None, verbose: bool = True, conditional: bool = True, 
+                 c_prior=npdist.Uniform(0.01, 0.99)) -> [MCMC, jnp.ndarray, float]:
     """
     Run MCMC inference using VAE decoder.
 
@@ -59,6 +61,7 @@ def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decod
     :param c: a Jax ndarray used for cVAE of the shape, (N, C).
     :param verbose: if True, prints the MCMC summary.
     :param conditional: if True, concatenate the condition to latent vector.
+    :param c_prior: a numpyro distribution used for prior of c.
 
     Returns:
         - MCMC object
@@ -77,7 +80,7 @@ def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decod
         progress_bar=False if "NUMPYRO_SPHINXBUILD" in os.environ else True,
     )
     start = time.time()
-    mcmc.run(rng_key, args, decoder, decoder_params, c, conditional)
+    mcmc.run(rng_key, args, decoder, decoder_params, c, conditional, c_prior)
     t_elapsed = time.time() - start
     if verbose:
         mcmc.print_summary(exclude_deterministic=False)
@@ -90,7 +93,7 @@ def run_mcmc_vae(rng_key: KeyArray, model: numpyro.primitives, args: Dict, decod
     return mcmc, mcmc.get_samples(), t_elapsed
 
 
-def run_mcmc_gp(rng_key, model, args, gp_kernel, verbose: bool = True):
+def run_mcmc_gp(rng_key, model, args, gp_kernel, verbose: bool = True, ls_prior=npdist.Uniform(0.01, 0.99)):
     """
     Run MCMC inference using GP.
 
@@ -106,7 +109,7 @@ def run_mcmc_gp(rng_key, model, args, gp_kernel, verbose: bool = True):
         progress_bar=False if "NUMPYRO_SPHINXBUILD" in os.environ else True,
     )
     start = time.time()
-    mcmc.run(rng_key, args, gp_kernel)
+    mcmc.run(rng_key, args, gp_kernel, ls_prior)
     t_elapsed = time.time() - start
     if verbose:
         mcmc.print_summary(exclude_deterministic=False)
@@ -119,7 +122,7 @@ def run_mcmc_gp(rng_key, model, args, gp_kernel, verbose: bool = True):
     return mcmc, mcmc.get_samples(), t_elapsed
 
 
-def gp_mcmc_inference_model(args, gp_kernel):
+def gp_mcmc_inference_model(args, gp_kernel, ls_prior=npdist.Uniform(0.01, 0.99)):
     """
     GP MCMC Inference model
     """
@@ -127,8 +130,8 @@ def gp_mcmc_inference_model(args, gp_kernel):
     y = args["y_obs"]
     obs_idx = args["obs_idx"]
     x = args["x"]
-
-    ls = numpyro.sample("ls", npdist.Uniform(0.01, 0.99))
+    
+    ls = numpyro.sample("ls", ls_prior)
     gp_kernel.lengthscale = ls
 
     k = gp_kernel(x, x)
