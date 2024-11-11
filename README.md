@@ -67,7 +67,7 @@ pytest -v tests/
 
 ### Contributing
 
-For all correspondence, please contact [elizaveta.semenova@cs.ox.ac.uk](mailto:elizaveta.semenova@cs.ox.ac.uk).
+For all correspondence, please contact [elizaveta.p.semenova@gmail.com](mailto:elizaveta.p.semenova@gmail.com).
 
 ### License
 
