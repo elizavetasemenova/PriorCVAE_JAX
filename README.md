@@ -63,7 +63,9 @@ pytest -v tests/
 
 | Project | Description | Publication | Uses current library |
 | --- | --- | --- | --- |
-| [aggVAE](https://github.com/MLGlobalHealth/aggVAE) | "Deep learning and MCMC with aggVAE for shifting administrative boundaries: mapping malaria prevalence in Kenya", Elizaveta Semenova, Swapnil Mishra, Samir Bhatt, Seth Flaxman, Juliette Unwin | [arvix](https://arxiv.org/pdf/2305.19779.pdf) Accepted to the "Epistemic Uncertainty in Artificial Intelligence" workshop of the "Uncertainty in Artificial Intelligence (UAI 2023)" conference.| no
+| [aggVAE](https://github.com/MLGlobalHealth/aggVAE) | "Deep learning and MCMC with aggVAE for shifting administrative boundaries: mapping malaria prevalence in Kenya", Elizaveta Semenova, Swapnil Mishra, Samir Bhatt, Seth Flaxman, Juliette Unwin | [arvix](https://arxiv.org/pdf/2305.19779.pdf) Accepted to the "Epistemic Uncertainty in Artificial Intelligence" workshop of the "Uncertainty in Artificial Intelligence (UAI 2023)" conference. Publishes [here](https://link.springer.com/chapter/10.1007/978-3-031-57963-9_2)| no
+| Federated learning | "Federated Learning for Non-factorizable Models using Deep Generative Prior Approximations", Conor Hassan, Joshua J Bon, Elizaveta Semenova, Antonietta Mira, Kerrie Mengersen | [arxiv](https://arxiv.org/pdf/2405.16055) | no |
+
 
 ### Contributing
 
